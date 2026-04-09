@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
+import logo from './assets/logo.png';
 import {
   UploadCloud, FileText, CheckCircle, XCircle, AlertTriangle,
   Download, Loader, ChevronDown, ChevronUp, Globe, Info, Eye
@@ -306,7 +307,7 @@ function App() {
       {/* Header */}
       <header className="app-header">
         <div className="header-logo">
-          <img src="/logo.png" alt="Minsait Logo" className="brand-logo" />
+          <img src={logo} alt="Minsait Logo" className="brand-logo" />
         </div>
         <div className="header-meta">CV → PowerPoint · Personalizado Minsait</div>
       </header>
