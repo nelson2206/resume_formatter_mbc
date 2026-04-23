@@ -2,8 +2,12 @@ import io
 import pdfplumber
 import re
 import fitz  # PyMuPDF
-import easyocr
-import numpy as np
+try:
+    import easyocr
+    import numpy as np
+except ImportError:
+    easyocr = None
+    np = None
 
 from PIL import Image
 
@@ -12,6 +16,10 @@ _reader = None
 
 def get_ocr_reader():
     global _reader
+    if easyocr is None:
+        print("[extractor] EasyOCR no está instalado. El soporte para PDFs escaneados está desactivado.")
+        return None
+        
     if _reader is None:
         print("[extractor] Inicializando EasyOCR (esto puede tardar la primera vez)...")
         try:
@@ -110,6 +118,9 @@ def _extraer_ocr(file_bytes: bytes) -> str:
     texto_ocr = ""
     try:
         reader = get_ocr_reader()
+        if reader is None:
+            return "[Aviso: Este PDF requiere OCR pero no está activado en esta versión de nube.]"
+            
         doc = fitz.open(stream=file_bytes, filetype="pdf")
         
         for page_num in range(len(doc)):
