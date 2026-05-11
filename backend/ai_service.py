@@ -60,8 +60,8 @@ REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
 5. "rol_seniority": Pon un rol y usa estrictamente la estructura de seniority de Minsait: Analyst, Consultant, Senior Consultant, Manager, Senior Manager, o Director (Ej: "Consultant | Gestión Financiera").
 6. "resumen_profesional": Genera un resumen ejecutivo de entre 2 y 3 líneas (ideal 3 líneas).
 7. "conocimientos_clave": Extrae herramientas, metodologías y frameworks. Máximo 6 bullets. Consolida herramientas similares usando comas.
-8. "experiencia_profesional": Debe tener un detalle profundo. Mínimo 250 palabras en total. Idealmente busca alcanzar hasta 20 bullets detallados si la información lo permite, sin inventar hechos. Como MÍNIMO ABSOLUTO debe poseer 12 bullets.
-   - MANEJO DE FORMATO: En perfiles resumen con columnas, identifica el bloque de experiencia y desglosa minuciosamente las actividades para acercarte al ideal de 20 bullets con wording ejecutivo.
+8. "experiencia_profesional": Debe tener un detalle profundo y equilibrado. El objetivo IDEAL es que la suma total de texto esté entre 200 y 260 palabras. Prioriza alcanzar esta longitud de texto por encima del número de bullets. No hay un límite máximo de bullets, pero como MÍNIMO ABSOLUTO debe poseer 12 bullets detallados para asegurar profundidad.
+   - MANEJO DE FORMATO: En perfiles resumen con columnas, identifica el bloque de experiencia y desglosa minuciosamente las actividades para alcanzar el rango de palabras ideal con wording ejecutivo.
 9. "certificaciones": Extrae máximo 5 bullets. Límite de extensión: máximo 24 palabras en total.
 10. "formacion_academica": Extrae máximo 5 bullets. NUNCA incluyas el año de graduación o periodos. REGLA DE SIGLAS OBLIGATORIA: Nunca uses el nombre completo de la universidad, usa SIEMPRE sus siglas:
     - Pontificia Universidad Católica del Perú -> PUCP
