@@ -56,14 +56,14 @@ REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
 1. NO inventes experiencia, certificaciones, herramientas ni idiomas.
 2. NUNCA uses la frase "Por validar". Si falta información, déjalo como cadena vacía "" o lista vacía [].
 3. NO inferir métricas, números de proyectos, años de experiencia ni impacto cuantitativo no declarado.
-4. "nombre": Debes colocar exactamente 1 nombre y 1 apellido. El nombre suele estar en el encabezado más prominente. En formatos de "Ficha de Perfil" o columnas, busca en la parte superior izquierda o central.
-5. "rol_seniority": Pon un rol y usa estrictamente la estructura de seniority de Minsait: Analyst, Consultant, Senior Consultant, Manager, Senior Manager, o Director (Ej: "Consultant | Gestión Financiera").
+4. "nombre": Usa el nombre tal como aparece en el CV. Si la persona tiene múltiples nombres y/o apellidos, conserva el primer nombre + primer apellido, pero NUNCA inventes, traduzcas ni alteres el nombre. El nombre suele estar en el encabezado más prominente. En formatos de "Ficha de Perfil" o columnas, busca en la parte superior izquierda o central. Si no se encuentra ningún nombre, deja "" y añade una alerta.
+5. "rol_seniority": Pon un rol y usa estrictamente la estructura de seniority de Minsait: Analyst, Consultant, Senior Consultant, Manager, Senior Manager, o Director (Ej: "Consultant | Gestión Financiera"). El seniority debe basarse en EVIDENCIA documental (años de experiencia, títulos previos, alcance de los roles desempeñados). Si el CV no aporta evidencia suficiente para inferir el seniority, deja "rol_seniority" como "" y añade una alerta. NUNCA asignes un seniority por defecto ni por suposición.
 6. "resumen_profesional": Genera un resumen ejecutivo de entre 2 y 3 líneas (ideal 3 líneas).
 7. "conocimientos_clave": Extrae herramientas, metodologías y frameworks. Máximo 6 bullets. Consolida herramientas similares usando comas.
-8. "experiencia_profesional": Debe tener un detalle profundo y equilibrado. El objetivo IDEAL es que la suma total de texto esté entre 210 y 260 palabras. Prioriza alcanzar esta longitud de texto por encima del número de bullets. No hay un límite máximo de bullets, pero como MÍNIMO ABSOLUTO debe poseer 12 bullets detallados para asegurar profundidad.
-   - MANEJO DE FORMATO: En perfiles resumen con columnas, identifica el bloque de experiencia y desglosa minuciosamente las actividades para alcanzar el rango de palabras ideal con wording ejecutivo.
+8. "experiencia_profesional": Lista TODAS las responsabilidades, funciones y logros que aparezcan EXPLÍCITAMENTE en el CV, redactados con wording ejecutivo claro. NO inventes, NO infles ni agregues actividades que no estén en la fuente para "alcanzar una longitud". Si el CV aporta poco material, devuelve menos bullets y añade una alerta indicando que la experiencia documentada es limitada. La cantidad de bullets y la longitud del texto deben reflejar fielmente lo que contiene el CV, ni más ni menos.
+   - MANEJO DE FORMATO: En perfiles resumen con columnas, identifica el bloque de experiencia y desglosa las actividades realmente declaradas; reorganizar y reformular es válido, fabricar contenido nuevo NO lo es.
 9. "certificaciones": Extrae máximo 5 bullets. Límite de extensión: máximo 24 palabras en total.
-10. "formacion_academica": Extrae máximo 5 bullets. NUNCA incluyas el año de graduación o periodos. REGLA DE SIGLAS OBLIGATORIA: Nunca uses el nombre completo de la universidad, usa SIEMPRE sus siglas:
+10. "formacion_academica": Extrae máximo 5 bullets. NUNCA incluyas el año de graduación o periodos. REGLA DE SIGLAS: Si la universidad está en la siguiente lista, usa SIEMPRE sus siglas. Si la universidad NO está en la lista, mantén su nombre completo tal como aparece en el CV — NUNCA inventes siglas:
     - Pontificia Universidad Católica del Perú -> PUCP
     - Universidad del Pacífico -> UP
     - Universidad de Piura -> UP
@@ -79,18 +79,11 @@ REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
     - 20% SENIORITY/TRAYECTORIA: Años totales de experiencia. Analyst (0-3y), Consultant (3-5y), Senior Consultant (5-8y), Manager (8y+). Entrega mayor puntaje si posee más años comprobados.
     - 10% SECTOR: Experiencia específica en la industria del cliente.
     - REGLA DE IDIOMA: USA SIEMPRE términos en inglés para seniority: Analyst, Consultant, Senior Consultant, Manager. NUNCA uses Consultor, Gerente, Analista o similares.
-    - PROHIBICIÓN: No uses números redondos genéricos (ej: 85%). Busca precisión matemática basada en evidencia (ej: 74, 88, 62).
-14. "enfoque_fit": CAMPO OBLIGATORIO. Una frase de 5-10 palabras que resuma el ajuste real o gap crítico. NUNCA envíes "Resumen de perfil".
-15. "semaforo": Objeto con "cumple" (3-4 puntos) y "gaps" (2-3 puntos).
+    - PROHIBICIÓN: No uses números redondos genéricos (ej: 85%). El score debe derivarse de la evidencia del CV y del contexto.
+    - SIN CONTEXTO O SIN EVIDENCIA: Si no se entregó "contexto_proyecto", o si falta información en el CV para evaluar alguno de los 4 ejes, devuelve "fit_score": null y añade una alerta explicando el motivo. NO fabriques un número que aparente precisión que no tienes.
+14. "enfoque_fit": Una frase de 5-10 palabras que resuma el ajuste real o gap crítico. Si no se entregó "contexto_proyecto", devuelve "" y añade una alerta — NO opines sobre el ajuste sin un rol objetivo. NUNCA envíes "Resumen de perfil".
+15. "semaforo": Objeto con "cumple" y "gaps", evaluados SOLO contra el "contexto_proyecto". Si no se entregó contexto, devuelve "cumple": [], "gaps": [] y añade la alerta "Semáforo no calculable sin contexto del rol". NUNCA inventes gaps ni fortalezas sin un rol objetivo de referencia.
 16. LAYOUT: Segmentado por secciones (ENCABEZADO, LATERAL, PRINCIPAL).
-
-Salida JSON:
-{{
-    "nombre": "Nombre y 1 Apellido",
-    "rol_seniority": "Role | Consultant",
-    "enfoque_fit": "Resumen crítico del ajuste.",
-    ...
-}}
 
 ESTRUCTURA JSON OBLIGATORIA (devuelve SOLO el JSON, sin texto adicional):
 {{{{

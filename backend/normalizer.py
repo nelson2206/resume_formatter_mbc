@@ -23,7 +23,7 @@ def normalizar_perfil(datos: dict) -> dict:
         "certificaciones": _lista(datos.get("certificaciones", [])),
         "resumen_profesional": _str(datos.get("resumen_profesional", "")),
         "experiencia_profesional": _lista(datos.get("experiencia_profesional", [])),
-        "fit_score": int(datos.get("fit_score", 0)),
+        "fit_score": _fit_score(datos.get("fit_score")),
         "semaforo": datos.get("semaforo", {"cumple": [], "gaps": []}),
         "alertas": _lista(datos.get("alertas", [])),
     }
@@ -84,6 +84,22 @@ def normalizar_perfil(datos: dict) -> dict:
     perfil["resumen_profesional"] = _truncar_resumen(perfil["resumen_profesional"])
 
     return perfil
+
+
+def _fit_score(valor):
+    """
+    Devuelve el fit_score como entero 0-100, o None si la IA no pudo calcularlo
+    (por falta de contexto o evidencia). NUNCA fabrica un valor por defecto.
+    """
+    if valor is None or valor == "":
+        return None
+    try:
+        score = int(float(valor))
+    except (TypeError, ValueError):
+        return None
+    if score < 0 or score > 100:
+        return None
+    return score
 
 
 def _str(valor) -> str:
