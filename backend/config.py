@@ -13,7 +13,11 @@ OUTPUTS_DIR = os.path.join(PROJECT_DIR, "outputs")
 UPLOADS_DIR = os.path.join(PROJECT_DIR, "uploads")
 
 # Modelo LLM
-LLM_MODEL = "gpt-4o-mini"
+# gpt-5.4-mini: mejor adherencia a reglas anti-alucinación que gpt-4o-mini,
+# soporta Structured Outputs (json_schema strict). Si cambias a un modelo de
+# razonamiento que no acepte 'temperature', ai_service reintenta automáticamente
+# sin ese parámetro.
+LLM_MODEL = "gpt-5.4-mini"
 LLM_TEMPERATURE = 0.15  # Bajo para máxima precisión documental
 
 # Categorías de seniority válidas (Big4)

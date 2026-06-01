@@ -27,6 +27,42 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 
+# Esquema estricto del perfil para Structured Outputs (response_format json_schema).
+# Con strict=True el modelo NO puede generar una respuesta que viole esta estructura:
+# se garantiza a nivel de generación que existan todos los campos y con el tipo correcto.
+_PERFIL_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [
+        "nombre", "rol_seniority", "enfoque_fit", "formacion_academica",
+        "conocimientos_clave", "idiomas", "resumen_profesional",
+        "experiencia_profesional", "fit_score", "semaforo", "alertas",
+    ],
+    "properties": {
+        "nombre": {"type": "string"},
+        "rol_seniority": {"type": "string"},
+        "enfoque_fit": {"type": "string"},
+        "formacion_academica": {"type": "array", "items": {"type": "string"}},
+        "conocimientos_clave": {"type": "array", "items": {"type": "string"}},
+        "idiomas": {"type": "string"},
+        "resumen_profesional": {"type": "string"},
+        "experiencia_profesional": {"type": "array", "items": {"type": "string"}},
+        # fit_score puede ser null cuando no hay contexto/evidencia suficiente.
+        "fit_score": {"type": ["integer", "null"]},
+        "semaforo": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["cumple", "gaps"],
+            "properties": {
+                "cumple": {"type": "array", "items": {"type": "string"}},
+                "gaps": {"type": "array", "items": {"type": "string"}},
+            },
+        },
+        "alertas": {"type": "array", "items": {"type": "string"}},
+    },
+}
+
+
 def extrae_perfil_cv(
     cv_text: str,
     contexto_proyecto: str = "",
@@ -140,38 +176,51 @@ REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
 15. "semaforo": Objeto con "cumple" y "gaps", evaluados SOLO contra el "contexto_proyecto". Si no se entregó contexto, devuelve "cumple": [], "gaps": [] y añade la alerta "Semáforo no calculable sin contexto del rol". NUNCA inventes gaps ni fortalezas sin un rol objetivo de referencia.
 16. LAYOUT: Segmentado por secciones (ENCABEZADO, LATERAL, PRINCIPAL).
 
-ESTRUCTURA JSON OBLIGATORIA (devuelve SOLO el JSON, sin texto adicional):
-{{{{
-    "nombre": "Nombre y 1 Apellido",
-    "rol_seniority": "Role | Seniority (Analyst, Consultant, Senior Consultant or Manager)",
-    "enfoque_fit": "Frase corta estratégica (5-10 palabras).",
-    "formacion_academica": ["Título, Universidad (siglas)", "Certificación relevante"],
-    "conocimientos_clave": ["Herramienta 1", "Metodología 2"],
-    "idiomas": "Español",
-    "resumen_profesional": "Línea 1 con una **idea clave** resaltada.\\nLínea 2.\\nLínea 3.",
-    "experiencia_profesional": ["Bullet de experiencia con **logro o herramienta clave** resaltada.", "Otro bullet con **dato relevante** en negrita."],
-    "fit_score": 78,
-    "semaforo": {{{{
-        "cumple": ["Punto 1", "Punto 2"],
-        "gaps": ["Punto 3"]
-    }}}},
-    "alertas": []
-}}}}"""
+ESTRUCTURA JSON: La estructura del JSON de salida está definida y forzada por el esquema
+(Structured Outputs), por lo que NO necesitas memorizar su forma: limítate a rellenar cada
+campo respetando las reglas anteriores. Recordatorios de contenido:
+- "resumen_profesional" entre 2 y 3 líneas separadas por saltos de línea (\\n).
+- El resaltado **negrita** SOLO en "resumen_profesional" y "experiencia_profesional"; ningún
+  otro campo lleva asteriscos.
+- "fit_score" entero 0-100 o null; "semaforo" con listas "cumple" y "gaps".
+- No incluyas un campo "certificaciones": va dentro de "formacion_academica"."""
 
     contexto_bloque = f"\n\nCONTEXTO DEL PROYECTO O ROL (prioriza experiencia relevante sin inventar):\n{contexto_proyecto}" if contexto_proyecto.strip() else ""
     user_prompt = f"CV PARA PROCESAR:{contexto_bloque}\n\n{cv_text}"
 
+    base_kwargs = dict(
+        model=LLM_MODEL,
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "perfil_cv",
+                "strict": True,
+                "schema": _PERFIL_SCHEMA,
+            },
+        },
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+    )
+
     try:
-        response = client.chat.completions.create(
-            model=LLM_MODEL,
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=LLM_TEMPERATURE,
-        )
-        text = response.choices[0].message.content.strip()
+        try:
+            response = client.chat.completions.create(temperature=LLM_TEMPERATURE, **base_kwargs)
+        except Exception as e_temp:
+            # Algunos modelos con razonamiento (familia GPT-5) solo aceptan la temperatura
+            # por defecto. Si 'temperature' no es soportada, reintentamos sin ese parámetro.
+            if "temperature" in str(e_temp).lower():
+                print("[ai_service] El modelo no acepta 'temperature'; reintentando sin ese parámetro.")
+                response = client.chat.completions.create(**base_kwargs)
+            else:
+                raise
+
+        msg = response.choices[0].message
+        if getattr(msg, "refusal", None):
+            return _perfil_vacio_con_error(f"El modelo rechazó la solicitud: {msg.refusal}")
+
+        text = (msg.content or "").strip()
         data = json.loads(text)
         return data
 
@@ -191,8 +240,9 @@ def _perfil_vacio_con_error(motivo: str) -> dict:
         "formacion_academica": [],
         "conocimientos_clave": [],
         "idiomas": "",
-        "certificaciones": [],
         "resumen_profesional": "",
         "experiencia_profesional": [],
+        "fit_score": None,
+        "semaforo": {"cumple": [], "gaps": []},
         "alertas": [f"Error en extracción IA: {motivo}"],
     }
