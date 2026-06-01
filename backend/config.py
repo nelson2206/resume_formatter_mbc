@@ -4,6 +4,12 @@ config.py — Configuración centralizada del sistema Staffing AI Builder
 
 # Directorio base del backend (relativo a este archivo)
 import os
+from dotenv import load_dotenv
+
+# Cargamos .env aquí también para que los overrides de modelo por variable de
+# entorno estén disponibles al construir PROVEEDORES (config se importa primero).
+load_dotenv(override=True)
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(BASE_DIR)
 
@@ -12,13 +18,37 @@ TEMPLATES_DIR = os.path.join(PROJECT_DIR, "templates")
 OUTPUTS_DIR = os.path.join(PROJECT_DIR, "outputs")
 UPLOADS_DIR = os.path.join(PROJECT_DIR, "uploads")
 
-# Modelo LLM
-# gpt-5.4-mini: mejor adherencia a reglas anti-alucinación que gpt-4o-mini,
-# soporta Structured Outputs (json_schema strict). Si cambias a un modelo de
-# razonamiento que no acepte 'temperature', ai_service reintenta automáticamente
-# sin ese parámetro.
-LLM_MODEL = "gpt-5.4-mini"
-LLM_TEMPERATURE = 0.15  # Bajo para máxima precisión documental
+# Temperatura compartida por todos los proveedores (baja = máxima precisión documental).
+LLM_TEMPERATURE = 0.15
+
+# ── Proveedores de IA disponibles ───────────────────────────────────────────────
+# El usuario elige uno en la UI. Cada proveedor define:
+#   - label: nombre visible en el frontend
+#   - model: ID del modelo (overridable con la variable de entorno indicada en 'model_env')
+#   - env:   variable de entorno con la API key
+# El modelo se puede cambiar sin tocar código vía las variables OPENAI_MODEL /
+# GEMINI_MODEL / ANTHROPIC_MODEL en el .env.
+PROVEEDORES = {
+    "openai": {
+        "label": "OpenAI",
+        "model": os.getenv("OPENAI_MODEL", "gpt-5.4-mini"),
+        "env": "OPENAI_API_KEY",
+    },
+    "gemini": {
+        "label": "Google Gemini",
+        "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        "env": "GEMINI_API_KEY",
+    },
+    "anthropic": {
+        "label": "Anthropic Claude",
+        "model": os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5"),
+        "env": "ANTHROPIC_API_KEY",
+    },
+}
+PROVEEDOR_DEFAULT = "openai"
+
+# Compatibilidad: algunos módulos/tests aún referencian LLM_MODEL.
+LLM_MODEL = PROVEEDORES["openai"]["model"]
 
 # Categorías de seniority válidas (Big4)
 SENIORITY_LEVELS = [

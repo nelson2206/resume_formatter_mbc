@@ -1,6 +1,8 @@
 """
 ai_service.py — Módulo LLM para extracción y redacción de perfiles Big4.
-Usa OpenAI GPT. Desacoplado para facilitar cambio de proveedor.
+Multi-proveedor: OpenAI, Google Gemini o Anthropic Claude (elegible por el usuario).
+Los SDK de cada proveedor se importan de forma perezosa (lazy) para no exigir tenerlos
+todos instalados ni todas las API keys configuradas.
 
 REGLAS ESTRICTAS:
 - NO inventar experiencia, certificaciones, herramientas, idiomas ni logros.
@@ -11,20 +13,17 @@ REGLAS ESTRICTAS:
 
 import os
 import json
-from openai import OpenAI
 from dotenv import load_dotenv
 from config import (
-    LLM_MODEL,
     LLM_TEMPERATURE,
     SENIORITY_LEVELS,
     FORMATOS_EXPERIENCIA,
     FORMATO_EXPERIENCIA_DEFAULT,
+    PROVEEDORES,
+    PROVEEDOR_DEFAULT,
 )
 
 load_dotenv(override=True)
-
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
 
 
 # Esquema estricto del perfil para Structured Outputs (response_format json_schema).
@@ -68,6 +67,7 @@ def extrae_perfil_cv(
     contexto_proyecto: str = "",
     idioma: str = "es",
     formato: str = FORMATO_EXPERIENCIA_DEFAULT,
+    proveedor: str = None,
 ) -> dict:
     """
     Extrae y estructura el perfil profesional desde el texto del CV.
@@ -81,6 +81,8 @@ def extrae_perfil_cv(
               tal como aparece en el CV.
             - "sin_empresa": no se nombra la empresa; se describe la actividad y se
               referencia el tipo/sector de la empresa.
+        proveedor: Motor de IA a usar ("openai", "gemini" o "anthropic"). Si es None
+            o inválido, se usa PROVEEDOR_DEFAULT.
 
     Returns:
         dict con el perfil estructurado según el JSON intermedio estándar.
@@ -188,48 +190,122 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
     contexto_bloque = f"\n\nCONTEXTO DEL PROYECTO O ROL (prioriza experiencia relevante sin inventar):\n{contexto_proyecto}" if contexto_proyecto.strip() else ""
     user_prompt = f"CV PARA PROCESAR:{contexto_bloque}\n\n{cv_text}"
 
+    # ── Resolver proveedor y API key ─────────────────────────────────────────────
+    proveedor = (proveedor or PROVEEDOR_DEFAULT).lower()
+    if proveedor not in PROVEEDORES:
+        proveedor = PROVEEDOR_DEFAULT
+    cfg = PROVEEDORES[proveedor]
+    api_key = os.getenv(cfg["env"])
+    if not api_key:
+        return _perfil_vacio_con_error(
+            f"Falta la API key del proveedor '{cfg['label']}'. Configura {cfg['env']} en backend/.env."
+        )
+
+    # ── Dispatch al proveedor elegido ────────────────────────────────────────────
+    try:
+        if proveedor == "openai":
+            data = _extraer_openai(system_prompt, user_prompt, cfg["model"], api_key)
+        elif proveedor == "gemini":
+            data = _extraer_gemini(system_prompt, user_prompt, cfg["model"], api_key)
+        elif proveedor == "anthropic":
+            data = _extraer_anthropic(system_prompt, user_prompt, cfg["model"], api_key)
+        else:
+            return _perfil_vacio_con_error(f"Proveedor no soportado: {proveedor}")
+        return data
+
+    except json.JSONDecodeError as e:
+        print(f"[ai_service] Error parseando JSON de {proveedor}: {e}")
+        return _perfil_vacio_con_error("Respuesta de IA no fue JSON válido.")
+    except ModuleNotFoundError as e:
+        print(f"[ai_service] SDK no instalado para {proveedor}: {e}")
+        return _perfil_vacio_con_error(
+            f"El SDK del proveedor '{cfg['label']}' no está instalado ({e.name}). "
+            f"Instálalo con pip (ver requirements.txt)."
+        )
+    except Exception as e:
+        print(f"[ai_service] Error llamando a {proveedor}: {e}")
+        return _perfil_vacio_con_error(str(e))
+
+
+# ── Implementaciones por proveedor ───────────────────────────────────────────────
+
+def _extraer_openai(system_prompt: str, user_prompt: str, model: str, api_key: str) -> dict:
+    """OpenAI con Structured Outputs (json_schema strict)."""
+    from openai import OpenAI
+
+    client = OpenAI(api_key=api_key)
     base_kwargs = dict(
-        model=LLM_MODEL,
+        model=model,
         response_format={
             "type": "json_schema",
-            "json_schema": {
-                "name": "perfil_cv",
-                "strict": True,
-                "schema": _PERFIL_SCHEMA,
-            },
+            "json_schema": {"name": "perfil_cv", "strict": True, "schema": _PERFIL_SCHEMA},
         },
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
     )
-
     try:
-        try:
-            response = client.chat.completions.create(temperature=LLM_TEMPERATURE, **base_kwargs)
-        except Exception as e_temp:
-            # Algunos modelos con razonamiento (familia GPT-5) solo aceptan la temperatura
-            # por defecto. Si 'temperature' no es soportada, reintentamos sin ese parámetro.
-            if "temperature" in str(e_temp).lower():
-                print("[ai_service] El modelo no acepta 'temperature'; reintentando sin ese parámetro.")
-                response = client.chat.completions.create(**base_kwargs)
-            else:
-                raise
+        response = client.chat.completions.create(temperature=LLM_TEMPERATURE, **base_kwargs)
+    except Exception as e_temp:
+        # Algunos modelos con razonamiento (familia GPT-5) solo aceptan la temperatura por defecto.
+        if "temperature" in str(e_temp).lower():
+            print("[ai_service] El modelo no acepta 'temperature'; reintentando sin ese parámetro.")
+            response = client.chat.completions.create(**base_kwargs)
+        else:
+            raise
 
-        msg = response.choices[0].message
-        if getattr(msg, "refusal", None):
-            return _perfil_vacio_con_error(f"El modelo rechazó la solicitud: {msg.refusal}")
+    msg = response.choices[0].message
+    if getattr(msg, "refusal", None):
+        raise RuntimeError(f"El modelo rechazó la solicitud: {msg.refusal}")
+    return json.loads((msg.content or "").strip())
 
-        text = (msg.content or "").strip()
-        data = json.loads(text)
-        return data
 
-    except json.JSONDecodeError as e:
-        print(f"[ai_service] Error parseando JSON de OpenAI: {e}")
-        return _perfil_vacio_con_error("Respuesta de IA no fue JSON válido.")
-    except Exception as e:
-        print(f"[ai_service] Error llamando a OpenAI: {e}")
-        return _perfil_vacio_con_error(str(e))
+def _extraer_anthropic(system_prompt: str, user_prompt: str, model: str, api_key: str) -> dict:
+    """Anthropic Claude con tool-use forzado (el input_schema fuerza la estructura)."""
+    import anthropic
+
+    client = anthropic.Anthropic(api_key=api_key)
+    tool = {
+        "name": "registrar_perfil",
+        "description": "Registra el perfil del CV estructurado según el esquema indicado.",
+        "input_schema": _PERFIL_SCHEMA,
+    }
+    response = client.messages.create(
+        model=model,
+        max_tokens=4096,
+        temperature=LLM_TEMPERATURE,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_prompt}],
+        tools=[tool],
+        tool_choice={"type": "tool", "name": "registrar_perfil"},
+    )
+    for block in response.content:
+        if getattr(block, "type", None) == "tool_use":
+            return dict(block.input)
+    raise RuntimeError("Claude no devolvió la herramienta con el perfil estructurado.")
+
+
+def _extraer_gemini(system_prompt: str, user_prompt: str, model: str, api_key: str) -> dict:
+    """Google Gemini con salida JSON (response_json_schema si el SDK lo soporta)."""
+    from google import genai
+    from google.genai import types
+
+    client = genai.Client(api_key=api_key)
+    base = dict(
+        system_instruction=system_prompt,
+        temperature=LLM_TEMPERATURE,
+        response_mime_type="application/json",
+    )
+    # Intentamos con esquema JSON estricto; si esta versión del SDK no lo acepta,
+    # caemos a JSON sin esquema (el prompt + el normalizer cubren la estructura).
+    try:
+        config = types.GenerateContentConfig(response_json_schema=_PERFIL_SCHEMA, **base)
+    except Exception:
+        config = types.GenerateContentConfig(**base)
+
+    response = client.models.generate_content(model=model, contents=user_prompt, config=config)
+    return json.loads((response.text or "").strip())
 
 
 def _perfil_vacio_con_error(motivo: str) -> dict:

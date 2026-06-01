@@ -3,7 +3,7 @@ import axios from 'axios';
 import logo from './assets/logo.png';
 import {
   UploadCloud, FileText, CheckCircle, XCircle, AlertTriangle,
-  Download, Loader, ChevronDown, ChevronUp, Globe, Info, Eye, Briefcase
+  Download, Loader, ChevronDown, ChevronUp, Globe, Info, Eye, Briefcase, Cpu
 } from 'lucide-react';
 import './index.css';
 import SlidePreview from './components/SlidePreview';
@@ -224,6 +224,7 @@ function App() {
   const [contexto, setContexto] = useState('');
   const [idioma, setIdioma] = useState('es');
   const [formato, setFormato] = useState('con_empresa');
+  const [proveedor, setProveedor] = useState('openai');
   const [procesando, setProcesando] = useState(false);
   const [resultados, setResultados] = useState([]);
   const [showSugerencias, setShowSugerencias] = useState(false);
@@ -271,6 +272,7 @@ function App() {
     formData.append('contexto', contexto);
     formData.append('idioma', idioma);
     formData.append('formato', formato);
+    formData.append('proveedor', proveedor);
 
     try {
       const res = await axios.post(`${API}/api/procesar`, formData, { timeout: 120000 });
@@ -353,6 +355,40 @@ function App() {
                   files={cvFiles}
                   onChange={setCvFiles}
                 />
+              </div>
+
+              {/* Motor de IA */}
+              <div className="field-group">
+                <label className="field-label">
+                  <Cpu size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                  Motor de IA
+                </label>
+                <div className="idioma-selector">
+                  <button
+                    type="button"
+                    className={`idioma-btn ${proveedor === 'openai' ? 'active' : ''}`}
+                    onClick={() => setProveedor('openai')}
+                  >
+                    🤖 OpenAI
+                  </button>
+                  <button
+                    type="button"
+                    className={`idioma-btn ${proveedor === 'gemini' ? 'active' : ''}`}
+                    onClick={() => setProveedor('gemini')}
+                  >
+                    ✨ Gemini
+                  </button>
+                  <button
+                    type="button"
+                    className={`idioma-btn ${proveedor === 'anthropic' ? 'active' : ''}`}
+                    onClick={() => setProveedor('anthropic')}
+                  >
+                    🧠 Claude
+                  </button>
+                </div>
+                <p className="idioma-nota">
+                  Requiere la API key del proveedor configurada en el backend.
+                </p>
               </div>
 
               {/* Idioma */}
