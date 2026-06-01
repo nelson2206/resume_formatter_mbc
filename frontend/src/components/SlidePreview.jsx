@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Briefcase, GraduationCap, Globe, Cpu, Award } from 'lucide-react';
+import { X, User, Briefcase, GraduationCap, Globe, Cpu } from 'lucide-react';
 
 // Convierte marcadores Markdown **negrita** en elementos <strong>.
 // Devuelve un array de nodos React listos para renderizar.
@@ -61,16 +61,6 @@ const SlidePreview = ({ perfil, onClose }) => {
                     <h4>IDIOMAS</h4>
                   </div>
                   <p className="sidebar-text">{perfil.idiomas}</p>
-                </section>
-
-                <section className="slide-sidebar-section">
-                  <div className="section-title-row">
-                    <Award size={14} className="icon-minsait" />
-                    <h4>CERTIFICACIONES</h4>
-                  </div>
-                  <ul>
-                    {perfil.certificaciones?.map((c, i) => <li key={i}>{c}</li>)}
-                  </ul>
                 </section>
 
                 <section className="slide-sidebar-section highlight">

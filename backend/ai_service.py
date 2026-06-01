@@ -69,11 +69,9 @@ def extrae_perfil_cv(
     else:
         instruccion_formato = (
             "FORMATO DE EXPERIENCIA — CON EMPRESA:\n"
-            "Cada bullet de 'experiencia_profesional' debe iniciar con el NOMBRE de la empresa o cliente, "
-            "escrito EXACTAMENTE como aparece en el CV, seguido de la actividad. Formato sugerido: "
-            "'Empresa — descripción de la actividad realizada.'. Usa el nombre real de la empresa SOLO si "
-            "está presente en el CV; si una experiencia concreta no tiene una empresa identificable en el CV, "
-            "describe la actividad sin anteponer ningún nombre y NUNCA inventes el nombre de la empresa."
+            "Cuando una experiencia tenga una empresa o cliente identificable en el CV, antepón su nombre "
+            "(tal como aparece en el CV) al describir la actividad. Si no hay empresa identificable, describe "
+            "solo la actividad. NUNCA inventes el nombre de una empresa."
         )
 
     instruccion_negrita = (
@@ -119,8 +117,8 @@ REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
 8. "experiencia_profesional": Lista TODAS las responsabilidades, funciones y logros que aparezcan EXPLÍCITAMENTE en el CV, redactados con wording ejecutivo claro. NO inventes, NO infles ni agregues actividades que no estén en la fuente para "alcanzar una longitud". Si el CV aporta poco material, devuelve menos bullets y añade una alerta indicando que la experiencia documentada es limitada. La cantidad de bullets y la longitud del texto deben reflejar fielmente lo que contiene el CV, ni más ni menos.
    - MANEJO DE FORMATO: En perfiles resumen con columnas, identifica el bloque de experiencia y desglosa las actividades realmente declaradas; reorganizar y reformular es válido, fabricar contenido nuevo NO lo es.
    - ESTILO DE REDACCIÓN: Aplica el "FORMATO DE EXPERIENCIA" y el "RESALTADO EN NEGRITA" indicados arriba a cada bullet.
-9. "certificaciones": Extrae máximo 5 bullets. Límite de extensión: máximo 24 palabras en total.
-10. "formacion_academica": Extrae máximo 5 bullets. NUNCA incluyas el año de graduación o periodos. REGLA DE SIGLAS: Si la universidad está en la siguiente lista, usa SIEMPRE sus siglas. Si la universidad NO está en la lista, mantén su nombre completo tal como aparece en el CV — NUNCA inventes siglas:
+9. CERTIFICACIONES: NO generes un campo "certificaciones" separado. Incorpora las certificaciones relevantes DENTRO de "formacion_academica" (ver punto 10), ya que la plantilla las agrupa bajo el mismo bloque.
+10. "formacion_academica": Extrae la formación académica Y las certificaciones relevantes en este MISMO campo (máximo 6 bullets combinados; coloca las certificaciones después de los estudios). NUNCA incluyas el año de graduación o periodos. REGLA DE SIGLAS: Si la universidad está en la siguiente lista, usa SIEMPRE sus siglas. Si la universidad NO está en la lista, mantén su nombre completo tal como aparece en el CV — NUNCA inventes siglas:
     - Pontificia Universidad Católica del Perú -> PUCP
     - Universidad del Pacífico -> UP
     - Universidad de Piura -> UP
@@ -129,7 +127,7 @@ REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
     - Universidad Cayetano Heredia -> UCH
     - Business School / Escuela de Negocios -> BS
 11. "conocimientos_clave": Extrae máximo 6 bullets. REGLA DE ESPACIO: Resta 1 al límite total de bullets por cada línea adicional (double line) que se genere.
-12. "idiomas": NUNCA dejes este campo vacío. Si el CV no especifica, pon el idioma original del CV (Ej: "Español").
+12. "idiomas": NUNCA dejes este campo vacío. Si el CV está redactado en español, incluye SIEMPRE "Español" (junto con los demás idiomas que el CV declare explícitamente). Si el CV no especifica ningún idioma, pon el idioma en que está redactado el CV.
 13. "fit_score": DEBES calcularlo siguiendo esta FÓRMULA MATEMÁTICA ESTRICTA (0 a 100):
     - 40% HERRAMIENTAS: Pondera la cantidad total y relevancia de herramientas del stack técnico (Ej: SQL, Python, Cloud). Premia la variedad técnica.
     - 30% FUNCIONES: Alineación con las responsabilidades del contexto. Premia la profundidad de logros.
@@ -147,10 +145,9 @@ ESTRUCTURA JSON OBLIGATORIA (devuelve SOLO el JSON, sin texto adicional):
     "nombre": "Nombre y 1 Apellido",
     "rol_seniority": "Role | Seniority (Analyst, Consultant, Senior Consultant or Manager)",
     "enfoque_fit": "Frase corta estratégica (5-10 palabras).",
-    "formacion_academica": ["Formación 1, Univ", "Formación 2, Univ"],
+    "formacion_academica": ["Título, Universidad (siglas)", "Certificación relevante"],
     "conocimientos_clave": ["Herramienta 1", "Metodología 2"],
     "idiomas": "Español",
-    "certificaciones": ["Cert 1"],
     "resumen_profesional": "Línea 1 con una **idea clave** resaltada.\\nLínea 2.\\nLínea 3.",
     "experiencia_profesional": ["Bullet de experiencia con **logro o herramienta clave** resaltada.", "Otro bullet con **dato relevante** en negrita."],
     "fit_score": 78,

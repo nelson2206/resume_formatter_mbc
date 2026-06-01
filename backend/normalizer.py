@@ -20,7 +20,6 @@ def normalizar_perfil(datos: dict) -> dict:
         "formacion_academica": _lista(datos.get("formacion_academica", [])),
         "conocimientos_clave": _lista(datos.get("conocimientos_clave", [])),
         "idiomas": _str(datos.get("idiomas", "")),
-        "certificaciones": _lista(datos.get("certificaciones", [])),
         "resumen_profesional": _str(datos.get("resumen_profesional", "")),
         "experiencia_profesional": _lista(datos.get("experiencia_profesional", [])),
         "fit_score": _fit_score(datos.get("fit_score")),
@@ -74,9 +73,15 @@ def normalizar_perfil(datos: dict) -> dict:
     if not perfil["formacion_academica"]:
         perfil["alertas"].append("Formación académica no encontrada en el CV.")
 
+    # Unificación: las certificaciones se incorporan a "formacion_academica"
+    # (la plantilla las agrupa bajo el mismo bloque). Red de seguridad por si la
+    # IA aún devuelve un campo "certificaciones" separado.
+    certs_sueltas = _lista(datos.get("certificaciones", []))
+    if certs_sueltas:
+        perfil["formacion_academica"] = perfil["formacion_academica"] + certs_sueltas
+
     # Eliminar duplicados en listas para evitar redundancias visibles
     perfil["formacion_academica"] = _deduplicar(perfil["formacion_academica"])
-    perfil["certificaciones"] = _deduplicar(perfil["certificaciones"])
     perfil["experiencia_profesional"] = _deduplicar(perfil["experiencia_profesional"])
     perfil["conocimientos_clave"] = _deduplicar(perfil["conocimientos_clave"])
 

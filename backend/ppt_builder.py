@@ -145,15 +145,14 @@ def generar_ppt_desde_plantilla(template_path: str, output_path: str, perfil: di
                 for token, items_lista in reemplazos_lista.items():
                     if token in texto_parrafo:
                         p_elem = para._p
-                        if not items_lista:
-                            items_lista = [""] # Dejar vacío si no hay items
-                            
-                        # Crear un nuevo párrafo por cada item en la lista
-                        for idx, item_str in enumerate(items_lista):
+                        # Crear un nuevo párrafo por cada item. Si la lista está vacía
+                        # (ej. {{certificaciones}} ya fusionado en formación), el placeholder
+                        # se elimina sin dejar línea en blanco.
+                        for item_str in items_lista:
                             nuevo_p = _clonar_parrafo_con_texto(para, item_str)
                             p_elem.addprevious(nuevo_p)
-                            
-                        # Marcar el original vacío con el token para borrarlo después
+
+                        # Marcar el placeholder original para borrarlo después
                         paras_to_remove.append(p_elem)
                         break
             
