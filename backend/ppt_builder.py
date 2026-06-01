@@ -15,6 +15,7 @@ La principal ventaja es que preserva el formato exacto del texto marcado.
 
 import copy
 import re
+import math
 from pptx import Presentation
 from pptx.util import Pt
 from pptx.dml.color import RGBColor
@@ -76,6 +77,14 @@ def generar_ppt_desde_plantilla(template_path: str, output_path: str, perfil: di
                 continue
                 
             tf = shape.text_frame
+            # ¿Es el cuadro de experiencia? Guardamos sus dimensiones para repartir
+            # los bullets verticalmente y evitar el espacio en blanco cuando hay pocos.
+            es_shape_experiencia = "{{Responsabilidades}}" in tf.text
+            box_h_emu = shape.height
+            box_w_emu = shape.width
+            # Párrafos de experiencia creados (para el espaciado adaptativo)
+            exp_paragraphs = []
+            exp_textos = []
             # Lista de párrafos que necesitaremos borrar (porque los expandimos)
             paras_to_remove = []
             if not tf.paragraphs:
@@ -148,9 +157,15 @@ def generar_ppt_desde_plantilla(template_path: str, output_path: str, perfil: di
                         # Crear un nuevo párrafo por cada item. Si la lista está vacía
                         # (ej. {{certificaciones}} ya fusionado en formación), el placeholder
                         # se elimina sin dejar línea en blanco.
+                        nuevos = []
                         for item_str in items_lista:
                             nuevo_p = _clonar_parrafo_con_texto(para, item_str)
                             p_elem.addprevious(nuevo_p)
+                            nuevos.append(nuevo_p)
+
+                        if token == "{{Responsabilidades}}":
+                            exp_paragraphs = nuevos
+                            exp_textos = list(items_lista)
 
                         # Marcar el placeholder original para borrarlo después
                         paras_to_remove.append(p_elem)
@@ -162,7 +177,69 @@ def generar_ppt_desde_plantilla(template_path: str, output_path: str, perfil: di
                 if parent is not None:
                     parent.remove(p_elem)
 
+            # Espaciado adaptativo: si es el cuadro de experiencia y quedó holgura,
+            # repartimos el espacio en blanco como separación entre bullets.
+            if es_shape_experiencia and exp_paragraphs:
+                spc = _espaciado_adaptativo_pt(exp_textos, box_h_emu, box_w_emu)
+                if spc > 0:
+                    for nuevo_p in exp_paragraphs:
+                        pPr = nuevo_p.find(f"{{{_NS_A}}}pPr")
+                        if pPr is None:
+                            pPr = etree.Element(f"{{{_NS_A}}}pPr")
+                            nuevo_p.insert(0, pPr)
+                        _set_space_before(pPr, spc)
+
     prs.save(output_path)
+
+
+def _set_space_before(pPr, pt):
+    """Inserta/actualiza <a:spcBef> en un pPr respetando el orden del esquema
+    DrawingML (spcBef va tras lnSpc y antes de spcAft / viñetas)."""
+    ns = _NS_A
+    for el in pPr.findall(f"{{{ns}}}spcBef"):
+        pPr.remove(el)
+    spcBef = etree.Element(f"{{{ns}}}spcBef")
+    spcPts = etree.SubElement(spcBef, f"{{{ns}}}spcPts")
+    spcPts.set("val", str(int(round(pt * 100))))  # centésimas de punto
+    lnSpc = pPr.find(f"{{{ns}}}lnSpc")
+    if lnSpc is not None:
+        lnSpc.addnext(spcBef)
+    else:
+        pPr.insert(0, spcBef)
+
+
+def _espaciado_adaptativo_pt(textos, box_height_emu, box_width_emu, font_pt=12.0):
+    """
+    Calcula el espacio (en puntos) a colocar ANTES de cada bullet para distribuir
+    la experiencia y reducir el espacio en blanco cuando hay pocos bullets, SIN
+    inventar contenido. Es conservador: estima por exceso la altura del texto para
+    no provocar desbordes, y limita el espaciado máximo.
+    """
+    EMU_PT = 12700.0
+    n = len([t for t in textos if t and t.strip()])
+    if n == 0 or not box_height_emu or not box_width_emu:
+        return 0.0
+
+    box_h = (box_height_emu / EMU_PT) * 0.90      # margen de seguridad interno
+    box_w = box_width_emu / EMU_PT
+    char_w = font_pt * 0.55                        # ancho de carácter (estimación amplia)
+    chars_per_line = max(1.0, box_w / char_w)
+    line_h = font_pt * 1.30                         # alto de línea aprox.
+
+    text_h = 0.0
+    for t in textos:
+        if not (t and t.strip()):
+            continue
+        limpio = t.replace("**", "")               # los asteriscos no se renderizan
+        lineas = max(1, math.ceil(len(limpio) / chars_per_line))
+        text_h += lineas * line_h
+
+    slack = box_h - text_h
+    if slack <= 0:
+        return 0.0
+
+    spc = slack / n
+    return max(0.0, min(spc, 26.0))                 # tope de 26pt para que no quede excesivo
 
 
 def _clonar_parrafo_con_texto(para_referencia, texto: str) -> etree._Element:
