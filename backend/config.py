@@ -36,12 +36,12 @@ PROVEEDORES = {
     },
     "gemini": {
         "label": "Google Gemini",
-        "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        "model": os.getenv("GEMINI_MODEL", "gemini-3.5-flash"),
         "env": "GEMINI_API_KEY",
     },
     "anthropic": {
         "label": "Anthropic Claude",
-        "model": os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5"),
+        "model": os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
         "env": "ANTHROPIC_API_KEY",
     },
 }
