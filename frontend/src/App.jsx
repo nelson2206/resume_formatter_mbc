@@ -224,7 +224,7 @@ function App() {
   const [contexto, setContexto] = useState('');
   const [idioma, setIdioma] = useState('es');
   const [formato, setFormato] = useState('con_empresa');
-  const [proveedor, setProveedor] = useState('openai');
+  const [proveedor, setProveedor] = useState('gemini');
   const [procesando, setProcesando] = useState(false);
   const [resultados, setResultados] = useState([]);
   const [showSugerencias, setShowSugerencias] = useState(false);

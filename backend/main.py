@@ -62,7 +62,7 @@ async def procesar_documentos(
     contexto: str = Form(""),
     idioma: str = Form("es"),
     formato: str = Form("con_empresa"),
-    proveedor: str = Form("openai"),
+    proveedor: str = Form("gemini"),
 ):
     """
     Procesa uno o múltiples CVs. Si no se envía plantilla, usa la cargada por defecto.

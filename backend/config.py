@@ -45,7 +45,7 @@ PROVEEDORES = {
         "env": "ANTHROPIC_API_KEY",
     },
 }
-PROVEEDOR_DEFAULT = "openai"
+PROVEEDOR_DEFAULT = "gemini"
 
 # Compatibilidad: algunos módulos/tests aún referencian LLM_MODEL.
 LLM_MODEL = PROVEEDORES["openai"]["model"]
