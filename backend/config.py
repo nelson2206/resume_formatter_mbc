@@ -36,7 +36,10 @@ PROVEEDORES = {
     },
     "gemini": {
         "label": "Google Gemini",
-        "model": os.getenv("GEMINI_MODEL", "gemini-3.5-flash"),
+        # gemini-2.5-flash (GA): estable y fiable. gemini-3.5-flash es más nuevo pero
+        # hoy tiene capacidad saturada (503 frecuentes). Cambia con GEMINI_MODEL si quieres
+        # probar el más reciente cuando se estabilice.
+        "model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
         "env": "GEMINI_API_KEY",
     },
     "anthropic": {

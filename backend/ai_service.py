@@ -13,6 +13,7 @@ REGLAS ESTRICTAS:
 
 import os
 import json
+import time
 from dotenv import load_dotenv
 from config import (
     LLM_TEMPERATURE,
@@ -201,30 +202,38 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
             f"Falta la API key del proveedor '{cfg['label']}'. Configura {cfg['env']} en backend/.env."
         )
 
-    # ── Dispatch al proveedor elegido ────────────────────────────────────────────
-    try:
-        if proveedor == "openai":
-            data = _extraer_openai(system_prompt, user_prompt, cfg["model"], api_key)
-        elif proveedor == "gemini":
-            data = _extraer_gemini(system_prompt, user_prompt, cfg["model"], api_key)
-        elif proveedor == "anthropic":
-            data = _extraer_anthropic(system_prompt, user_prompt, cfg["model"], api_key)
-        else:
-            return _perfil_vacio_con_error(f"Proveedor no soportado: {proveedor}")
-        return data
+    # ── Dispatch al proveedor elegido (con reintentos ante errores transitorios) ──
+    intentos = 3
+    for intento in range(1, intentos + 1):
+        try:
+            if proveedor == "openai":
+                return _extraer_openai(system_prompt, user_prompt, cfg["model"], api_key)
+            elif proveedor == "gemini":
+                return _extraer_gemini(system_prompt, user_prompt, cfg["model"], api_key)
+            elif proveedor == "anthropic":
+                return _extraer_anthropic(system_prompt, user_prompt, cfg["model"], api_key)
+            else:
+                return _perfil_vacio_con_error(f"Proveedor no soportado: {proveedor}")
 
-    except json.JSONDecodeError as e:
-        print(f"[ai_service] Error parseando JSON de {proveedor}: {e}")
-        return _perfil_vacio_con_error("Respuesta de IA no fue JSON válido.")
-    except ModuleNotFoundError as e:
-        print(f"[ai_service] SDK no instalado para {proveedor}: {e}")
-        return _perfil_vacio_con_error(
-            f"El SDK del proveedor '{cfg['label']}' no está instalado ({e.name}). "
-            f"Instálalo con pip (ver requirements.txt)."
-        )
-    except Exception as e:
-        print(f"[ai_service] Error llamando a {proveedor}: {e}")
-        return _perfil_vacio_con_error(str(e))
+        except json.JSONDecodeError as e:
+            print(f"[ai_service] Error parseando JSON de {proveedor}: {e}")
+            return _perfil_vacio_con_error("Respuesta de IA no fue JSON válido.")
+        except ModuleNotFoundError as e:
+            print(f"[ai_service] SDK no instalado para {proveedor}: {e}")
+            return _perfil_vacio_con_error(
+                f"El SDK del proveedor '{cfg['label']}' no está instalado ({e.name}). "
+                f"Instálalo con pip (ver requirements.txt)."
+            )
+        except Exception as e:
+            # Errores transitorios del proveedor (saturación, rate limit): reintentar.
+            if intento < intentos and _es_error_transitorio(e):
+                espera = 2 * intento
+                print(f"[ai_service] Error transitorio de {proveedor} "
+                      f"(intento {intento}/{intentos}); reintentando en {espera}s...")
+                time.sleep(espera)
+                continue
+            print(f"[ai_service] Error llamando a {proveedor}: {e}")
+            return _perfil_vacio_con_error(str(e))
 
 
 # ── Implementaciones por proveedor ───────────────────────────────────────────────
@@ -306,6 +315,18 @@ def _extraer_gemini(system_prompt: str, user_prompt: str, model: str, api_key: s
 
     response = client.models.generate_content(model=model, contents=user_prompt, config=config)
     return json.loads((response.text or "").strip())
+
+
+def _es_error_transitorio(e) -> bool:
+    """Detecta errores temporales del proveedor (saturación, rate limit, timeouts)
+    que conviene reintentar, en lugar de fallar de inmediato."""
+    s = str(e).lower()
+    señales = (
+        "503", "429", "500", "502", "529",
+        "unavailable", "overloaded", "high demand", "rate limit",
+        "timeout", "temporarily", "try again",
+    )
+    return any(x in s for x in señales)
 
 
 def _perfil_vacio_con_error(motivo: str) -> dict:
