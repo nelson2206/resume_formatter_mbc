@@ -61,6 +61,7 @@ async def procesar_documentos(
     plantilla: Optional[UploadFile] = File(None),
     contexto: str = Form(""),
     idioma: str = Form("es"),
+    formato: str = Form("con_empresa"),
 ):
     """
     Procesa uno o múltiples CVs. Si no se envía plantilla, usa la cargada por defecto.
@@ -111,7 +112,7 @@ async def procesar_documentos(
                 raise ValueError("No se pudo extraer texto suficiente del CV. Verifica que no sea un PDF escaneado sin OCR.")
 
             # ── Extraer perfil con IA ──────────────────────────────────────────
-            datos_raw = extrae_perfil_cv(texto_cv, contexto, idioma)
+            datos_raw = extrae_perfil_cv(texto_cv, contexto, idioma, formato)
 
             # ── Normalizar y validar ───────────────────────────────────────────
             perfil = normalizar_perfil(datos_raw)

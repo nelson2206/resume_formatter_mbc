@@ -13,7 +13,13 @@ import os
 import json
 from openai import OpenAI
 from dotenv import load_dotenv
-from config import LLM_MODEL, LLM_TEMPERATURE, SENIORITY_LEVELS
+from config import (
+    LLM_MODEL,
+    LLM_TEMPERATURE,
+    SENIORITY_LEVELS,
+    FORMATOS_EXPERIENCIA,
+    FORMATO_EXPERIENCIA_DEFAULT,
+)
 
 load_dotenv(override=True)
 
@@ -21,21 +27,64 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 
-def extrae_perfil_cv(cv_text: str, contexto_proyecto: str = "", idioma: str = "es") -> dict:
+def extrae_perfil_cv(
+    cv_text: str,
+    contexto_proyecto: str = "",
+    idioma: str = "es",
+    formato: str = FORMATO_EXPERIENCIA_DEFAULT,
+) -> dict:
     """
     Extrae y estructura el perfil profesional desde el texto del CV.
-    
+
     Args:
         cv_text: Texto plano extraído del CV.
         contexto_proyecto: RFP, descripción del rol o contexto adicional (opcional).
         idioma: Código de idioma de salida ("es" o "en"). Default "es".
-        
+        formato: Formato de redacción de la experiencia profesional:
+            - "con_empresa": cada bullet inicia con el nombre de la empresa/cliente
+              tal como aparece en el CV.
+            - "sin_empresa": no se nombra la empresa; se describe la actividad y se
+              referencia el tipo/sector de la empresa.
+
     Returns:
         dict con el perfil estructurado según el JSON intermedio estándar.
     """
-    
+
     seniority_lista = ", ".join(f'"{s}"' for s in SENIORITY_LEVELS)
-    
+
+    if formato not in FORMATOS_EXPERIENCIA:
+        formato = FORMATO_EXPERIENCIA_DEFAULT
+
+    if formato == "sin_empresa":
+        instruccion_formato = (
+            "FORMATO DE EXPERIENCIA — SIN EMPRESA (ANONIMIZADO):\n"
+            "En cada bullet de 'experiencia_profesional' NO menciones el nombre propio de ninguna "
+            "empresa o cliente. Describe directamente la actividad realizada y, cuando el CV lo permita, "
+            "haz referencia al TIPO o SECTOR de la organización (ej: 'para una entidad del sector bancario', "
+            "'en una compañía de retail', 'para un organismo público'). El sector debe derivarse de "
+            "información presente en el CV; si no es posible determinarlo con la información disponible, "
+            "omite la referencia al tipo de empresa en lugar de inventarla. NUNCA incluyas el nombre real "
+            "de la empresa ni datos que permitan identificarla directamente."
+        )
+    else:
+        instruccion_formato = (
+            "FORMATO DE EXPERIENCIA — CON EMPRESA:\n"
+            "Cada bullet de 'experiencia_profesional' debe iniciar con el NOMBRE de la empresa o cliente, "
+            "escrito EXACTAMENTE como aparece en el CV, seguido de la actividad. Formato sugerido: "
+            "'Empresa — descripción de la actividad realizada.'. Usa el nombre real de la empresa SOLO si "
+            "está presente en el CV; si una experiencia concreta no tiene una empresa identificable en el CV, "
+            "describe la actividad sin anteponer ningún nombre y NUNCA inventes el nombre de la empresa."
+        )
+
+    instruccion_negrita = (
+        "RESALTADO EN NEGRITA: En 'resumen_profesional' y en cada bullet de 'experiencia_profesional', "
+        "marca las ideas MÁS IMPORTANTES (logros clave, herramientas críticas, resultados, "
+        "responsabilidades de alto impacto) envolviéndolas entre dobles asteriscos en formato Markdown: "
+        "**texto importante**. El resaltado SOLO enfatiza texto que ya existe; NO agrega información nueva. "
+        "Resalta únicamente lo esencial (1 a 3 fragmentos breves por bullet), nunca frases completas ni el "
+        "bullet entero. No uses asteriscos en ningún otro campo del JSON."
+    )
+
     if idioma == "en":
         instruccion_idioma = (
             "Write the redacted content (resumen_profesional and experiencia_profesional bullets) in English. "
@@ -52,6 +101,13 @@ def extrae_perfil_cv(cv_text: str, contexto_proyecto: str = "", idioma: str = "e
     system_prompt = f"""Eres un agente experto en staffing de consultoría de Minsait.
 Tu objetivo es extraer datos de un CV y estructurarlos en un JSON estricto.
 
+IDIOMA DE SALIDA:
+{instruccion_idioma}
+
+{instruccion_formato}
+
+{instruccion_negrita}
+
 REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
 1. NO inventes experiencia, certificaciones, herramientas ni idiomas.
 2. NUNCA uses la frase "Por validar". Si falta información, déjalo como cadena vacía "" o lista vacía [].
@@ -62,6 +118,7 @@ REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
 7. "conocimientos_clave": Extrae herramientas, metodologías y frameworks. Máximo 6 bullets. Consolida herramientas similares usando comas.
 8. "experiencia_profesional": Lista TODAS las responsabilidades, funciones y logros que aparezcan EXPLÍCITAMENTE en el CV, redactados con wording ejecutivo claro. NO inventes, NO infles ni agregues actividades que no estén en la fuente para "alcanzar una longitud". Si el CV aporta poco material, devuelve menos bullets y añade una alerta indicando que la experiencia documentada es limitada. La cantidad de bullets y la longitud del texto deben reflejar fielmente lo que contiene el CV, ni más ni menos.
    - MANEJO DE FORMATO: En perfiles resumen con columnas, identifica el bloque de experiencia y desglosa las actividades realmente declaradas; reorganizar y reformular es válido, fabricar contenido nuevo NO lo es.
+   - ESTILO DE REDACCIÓN: Aplica el "FORMATO DE EXPERIENCIA" y el "RESALTADO EN NEGRITA" indicados arriba a cada bullet.
 9. "certificaciones": Extrae máximo 5 bullets. Límite de extensión: máximo 24 palabras en total.
 10. "formacion_academica": Extrae máximo 5 bullets. NUNCA incluyas el año de graduación o periodos. REGLA DE SIGLAS: Si la universidad está en la siguiente lista, usa SIEMPRE sus siglas. Si la universidad NO está en la lista, mantén su nombre completo tal como aparece en el CV — NUNCA inventes siglas:
     - Pontificia Universidad Católica del Perú -> PUCP
@@ -94,8 +151,8 @@ ESTRUCTURA JSON OBLIGATORIA (devuelve SOLO el JSON, sin texto adicional):
     "conocimientos_clave": ["Herramienta 1", "Metodología 2"],
     "idiomas": "Español",
     "certificaciones": ["Cert 1"],
-    "resumen_profesional": "Línea 1.\\nLínea 2.\\nLínea 3.",
-    "experiencia_profesional": ["Resp 1.", "Resp 2."],
+    "resumen_profesional": "Línea 1 con una **idea clave** resaltada.\\nLínea 2.\\nLínea 3.",
+    "experiencia_profesional": ["Bullet de experiencia con **logro o herramienta clave** resaltada.", "Otro bullet con **dato relevante** en negrita."],
     "fit_score": 78,
     "semaforo": {{{{
         "cumple": ["Punto 1", "Punto 2"],

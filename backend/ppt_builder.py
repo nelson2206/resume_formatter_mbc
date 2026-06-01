@@ -14,10 +14,42 @@ La principal ventaja es que preserva el formato exacto del texto marcado.
 """
 
 import copy
+import re
 from pptx import Presentation
 from pptx.util import Pt
 from pptx.dml.color import RGBColor
+from pptx.oxml.ns import qn
 from lxml import etree
+
+# Espacio de nombres DrawingML y atributo xml:space para preservar espacios entre runs
+_NS_A = "http://schemas.openxmlformats.org/drawingml/2006/main"
+_XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
+
+
+def _parse_segmentos_negrita(texto):
+    """
+    Divide un texto con marcadores Markdown **negrita** en una lista de
+    tuplas (fragmento, es_negrita). Los asteriscos sueltos sin pareja se
+    eliminan del texto normal para evitar artefactos visuales.
+
+    Ej: "Lideró **SAP** en banca" -> [("Lideró ", False), ("SAP", True), (" en banca", False)]
+    """
+    if not texto:
+        return [("", False)]
+
+    partes = re.split(r"\*\*(.+?)\*\*", texto)
+    segmentos = []
+    for idx, parte in enumerate(partes):
+        es_negrita = idx % 2 == 1
+        if not es_negrita:
+            parte = parte.replace("**", "")  # limpiar asteriscos huérfanos
+        if parte == "":
+            continue
+        segmentos.append((parte, es_negrita))
+
+    if not segmentos:
+        return [("", False)]
+    return segmentos
 
 def generar_ppt_desde_plantilla(template_path: str, output_path: str, perfil: dict):
     """
@@ -75,14 +107,20 @@ def generar_ppt_desde_plantilla(template_path: str, output_path: str, perfil: di
                     r2.font.color.rgb = RGBColor(255, 255, 255)
                     continue
                     
-                # 3. Resumen (12)
+                # 3. Resumen (12) — con resaltado en negrita
                 if "{{Resumen}}" in texto_parrafo:
                     pPr = copy.deepcopy(para._p.get_or_add_pPr())
                     para.clear()
                     para._p.append(pPr)
-                    para.text = perfil.get("resumen_profesional", "")
-                    for r in para.runs:
-                        r.font.size = Pt(12)
+                    for seg_text, es_negrita in _parse_segmentos_negrita(perfil.get("resumen_profesional", "")):
+                        run = para.add_run()
+                        run.text = seg_text
+                        run.font.size = Pt(12)
+                        run.font.bold = es_negrita
+                        # Preservar espacios al inicio/fin del fragmento entre runs
+                        t_elem = run._r.find(qn("a:t"))
+                        if t_elem is not None:
+                            t_elem.set(_XML_SPACE, "preserve")
                     continue
                 
                 # 4. Chequeo de reemplazos simples restantes (si hubiera)
@@ -130,46 +168,54 @@ def generar_ppt_desde_plantilla(template_path: str, output_path: str, perfil: di
 
 def _clonar_parrafo_con_texto(para_referencia, texto: str) -> etree._Element:
     """
-    Devuelve un nuevo elemento <a:p> copiado del formato del párrafo de referencia
-    y le inserta un único run con el `texto` especificado.
+    Devuelve un nuevo elemento <a:p> copiado del formato del párrafo de referencia.
+    El `texto` puede contener marcadores Markdown **negrita**, que se renderizan como
+    runs independientes en negrita preservando el resto del formato Minsait.
     """
-    ns = "http://schemas.openxmlformats.org/drawingml/2006/main"
+    ns = _NS_A
     p_new = etree.Element(f"{{{ns}}}p")
 
     # Obtener el elemento XML del párrafo de referencia
     p_ref_elem = para_referencia._p
-    
+
     # 1. Copiar pPr (propiedades de párrafo - ej. viñetas, márgenes)
     pPr_ref = p_ref_elem.find(f"{{{ns}}}pPr")
     if pPr_ref is not None:
         pPr_nuevo = copy.deepcopy(pPr_ref)
-        
+
         # AJUSTE DE IDENTACIÓN: Para que la segunda línea se alinee con el inicio de las letras
         # marL es el margen izquierdo del texto, indent es el desplazamiento de la primera línea (negativo para viñeta)
         # 457200 EMU = 12.7mm = 1/2 inch.
         pPr_nuevo.set("marL", "228600")
         pPr_nuevo.set("indent", "-228600")
-        
+
         p_new.append(pPr_nuevo)
-        
-    # 2. Localizar el primer run para copiar su formato
+
+    # 2. Localizar el primer run para copiar su formato base
     runs_existentes = p_ref_elem.findall(f"{{{ns}}}r")
-    rPr_copia = None
+    rPr_base = None
     if runs_existentes:
         rPr_existente = runs_existentes[0].find(f"{{{ns}}}rPr")
         if rPr_existente is not None:
-            rPr_copia = copy.deepcopy(rPr_existente)
-            
-    if rPr_copia is None:
-        rPr_copia = etree.Element(f"{{{ns}}}rPr")
-        
+            rPr_base = copy.deepcopy(rPr_existente)
+
+    if rPr_base is None:
+        rPr_base = etree.Element(f"{{{ns}}}rPr")
+
     # Forzar el formato Minsait: 12pt (1200 centésimas de punto)
-    rPr_copia.set("sz", "1200")
-            
-    # 3. Crear el nuevo run con el texto
-    r_new = etree.SubElement(p_new, f"{{{ns}}}r")
-    r_new.append(rPr_copia)
-    t_new = etree.SubElement(r_new, f"{{{ns}}}t")
-    t_new.text = texto
-    
+    rPr_base.set("sz", "1200")
+
+    # 3. Crear un run por cada fragmento, aplicando negrita donde corresponda
+    for seg_text, es_negrita in _parse_segmentos_negrita(texto):
+        r_new = etree.SubElement(p_new, f"{{{ns}}}r")
+        rPr_seg = copy.deepcopy(rPr_base)
+        if es_negrita:
+            rPr_seg.set("b", "1")
+        else:
+            rPr_seg.attrib.pop("b", None)
+        r_new.append(rPr_seg)
+        t_new = etree.SubElement(r_new, f"{{{ns}}}t")
+        t_new.set(_XML_SPACE, "preserve")  # preservar espacios entre fragmentos
+        t_new.text = seg_text
+
     return p_new

@@ -3,7 +3,7 @@ import axios from 'axios';
 import logo from './assets/logo.png';
 import {
   UploadCloud, FileText, CheckCircle, XCircle, AlertTriangle,
-  Download, Loader, ChevronDown, ChevronUp, Globe, Info, Eye
+  Download, Loader, ChevronDown, ChevronUp, Globe, Info, Eye, Briefcase
 } from 'lucide-react';
 import './index.css';
 import SlidePreview from './components/SlidePreview';
@@ -223,6 +223,7 @@ function App() {
   const [cvFiles, setCvFiles] = useState([]);
   const [contexto, setContexto] = useState('');
   const [idioma, setIdioma] = useState('es');
+  const [formato, setFormato] = useState('con_empresa');
   const [procesando, setProcesando] = useState(false);
   const [resultados, setResultados] = useState([]);
   const [showSugerencias, setShowSugerencias] = useState(false);
@@ -269,6 +270,7 @@ function App() {
     cvFiles.forEach(f => formData.append('cvs', f));
     formData.append('contexto', contexto);
     formData.append('idioma', idioma);
+    formData.append('formato', formato);
 
     try {
       const res = await axios.post(`${API}/api/procesar`, formData, { timeout: 120000 });
@@ -377,6 +379,36 @@ function App() {
                 </div>
                 <p className="idioma-nota">
                   Nombres, universidades, certificaciones y herramientas no se traducen.
+                </p>
+              </div>
+
+              {/* Formato de experiencia */}
+              <div className="field-group">
+                <label className="field-label">
+                  <Briefcase size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
+                  Formato de la experiencia
+                </label>
+                <div className="idioma-selector">
+                  <button
+                    type="button"
+                    className={`idioma-btn ${formato === 'con_empresa' ? 'active' : ''}`}
+                    onClick={() => setFormato('con_empresa')}
+                  >
+                    🏢 Con empresa
+                  </button>
+                  <button
+                    type="button"
+                    className={`idioma-btn ${formato === 'sin_empresa' ? 'active' : ''}`}
+                    onClick={() => setFormato('sin_empresa')}
+                  >
+                    🕶️ Sin empresa (anonimizado)
+                  </button>
+                </div>
+                <p className="idioma-nota">
+                  {formato === 'con_empresa'
+                    ? 'Cada experiencia inicia con el nombre de la empresa tal como aparece en el CV.'
+                    : 'No se nombra la empresa; se describe la actividad y se referencia el tipo/sector.'}
+                  {' '}En ambos casos se resaltan en negrita las ideas clave.
                 </p>
               </div>
 

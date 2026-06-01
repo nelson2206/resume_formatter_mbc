@@ -1,6 +1,18 @@
 import React from 'react';
 import { X, User, Briefcase, GraduationCap, Globe, Cpu, Award } from 'lucide-react';
 
+// Convierte marcadores Markdown **negrita** en elementos <strong>.
+// Devuelve un array de nodos React listos para renderizar.
+const renderNegrita = (texto) => {
+  if (!texto) return texto;
+  const partes = String(texto).split(/\*\*(.+?)\*\*/g);
+  return partes.map((parte, i) =>
+    i % 2 === 1
+      ? <strong key={i}>{parte}</strong>
+      : <React.Fragment key={i}>{parte.replace(/\*\*/g, '')}</React.Fragment>
+  );
+};
+
 const SlidePreview = ({ perfil, onClose }) => {
   if (!perfil) return null;
 
@@ -82,7 +94,7 @@ const SlidePreview = ({ perfil, onClose }) => {
                   </div>
                   <div className="resumen-content">
                     {perfil.resumen_profesional?.split('\n').map((line, i) => (
-                      <p key={i}>{line}</p>
+                      <p key={i}>{renderNegrita(line)}</p>
                     ))}
                   </div>
                 </section>
@@ -94,7 +106,7 @@ const SlidePreview = ({ perfil, onClose }) => {
                   </div>
                   <ul className="experience-list">
                     {perfil.experiencia_profesional?.map((exp, i) => (
-                      <li key={i}>{exp}</li>
+                      <li key={i}>{renderNegrita(exp)}</li>
                     ))}
                   </ul>
                 </section>
