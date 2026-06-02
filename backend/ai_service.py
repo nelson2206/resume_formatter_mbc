@@ -154,6 +154,7 @@ REGLAS ABSOLUTAS — INCUMPLIRLAS ES UN ERROR GRAVE:
 6. "resumen_profesional": Genera un resumen ejecutivo de entre 2 y 3 líneas (ideal 3 líneas).
 7. "conocimientos_clave": Extrae herramientas, metodologías y frameworks. Máximo 6 bullets. Consolida herramientas similares usando comas.
 8. "experiencia_profesional": Lista TODAS las responsabilidades, funciones y logros que aparezcan en el CV. Desarrolla cada actividad declarada con redacción ejecutiva COMPLETA —idealmente 1 a 2 frases por bullet (qué se hizo, alcance y cómo)— para que ningún bullet quede telegráfico. ATENCIÓN: esta ampliación es SOLO de redacción; está terminantemente PROHIBIDO añadir herramientas, cifras, porcentajes, clientes, sectores, tecnologías, resultados o responsabilidades que NO estén en el CV. No crees actividades nuevas para rellenar espacio. NO hay número mínimo de bullets: si el CV es escueto, devuelve solo los que correspondan (es preferible pocos bullets bien redactados a inventar) y añade una alerta indicando que la experiencia documentada es limitada.
+   - LÍMITE DE EXTENSIÓN: la suma total de palabras de "experiencia_profesional" NO debe superar las 320 palabras. Si el contenido declarado en el CV excede ese límite: (a) si se entregó "contexto_proyecto", prioriza y conserva las experiencias y actividades MÁS relevantes para ese rol/descripción, condensando o resumiendo las menos relevantes; (b) si NO hay contexto, sintetiza y resume consolidando actividades similares. NUNCA recortes de forma que se pierda información esencial: prefiere condensar la redacción antes que eliminar logros o responsabilidades importantes. Si tuviste que resumir por exceder el límite, añade una alerta indicándolo.
    - MANEJO DE FORMATO: En perfiles resumen con columnas, identifica el bloque de experiencia y desglosa las actividades realmente declaradas; reorganizar y reformular es válido, fabricar contenido nuevo NO lo es.
    - ESTILO DE REDACCIÓN: Aplica el "FORMATO DE EXPERIENCIA" y el "RESALTADO EN NEGRITA" indicados arriba a cada bullet.
 9. CERTIFICACIONES: NO generes un campo "certificaciones" separado. Incorpora las certificaciones relevantes DENTRO de "formacion_academica" (ver punto 10), ya que la plantilla las agrupa bajo el mismo bloque.
@@ -186,6 +187,7 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
 - El resaltado **negrita** SOLO en "resumen_profesional" y "experiencia_profesional"; ningún
   otro campo lleva asteriscos.
 - "fit_score" entero 0-100 o null; "semaforo" con listas "cumple" y "gaps".
+- "experiencia_profesional": máximo 320 palabras en total (prioriza por relevancia al contexto o sintetiza si excede).
 - No incluyas un campo "certificaciones": va dentro de "formacion_academica"."""
 
     contexto_bloque = f"\n\nCONTEXTO DEL PROYECTO O ROL (prioriza experiencia relevante sin inventar):\n{contexto_proyecto}" if contexto_proyecto.strip() else ""
