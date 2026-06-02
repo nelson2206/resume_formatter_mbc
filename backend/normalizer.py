@@ -88,13 +88,13 @@ def normalizar_perfil(datos: dict) -> dict:
     # Resumen en UNA sola línea (sin saltos de línea)
     perfil["resumen_profesional"] = _truncar_resumen(perfil["resumen_profesional"])
 
-    # Tope DURO de 350 palabras en experiencia (red de seguridad si la IA se pasa)
+    # Tope DURO de 260 palabras en experiencia (red de seguridad si la IA se pasa)
     perfil["experiencia_profesional"], recortados = _limitar_palabras(
-        perfil["experiencia_profesional"], 350
+        perfil["experiencia_profesional"], 260
     )
     if recortados:
         perfil["alertas"].append(
-            f"Se recortaron {recortados} bullet(s) de experiencia para respetar el límite de 350 palabras."
+            f"Se recortaron {recortados} bullet(s) de experiencia para respetar el límite de 260 palabras."
         )
 
     return perfil
