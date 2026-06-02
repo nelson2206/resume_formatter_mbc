@@ -380,10 +380,10 @@ function App() {
                   </button>
                   <button
                     type="button"
-                    className={`idioma-btn ${proveedor === 'anthropic' ? 'active' : ''}`}
-                    onClick={() => setProveedor('anthropic')}
+                    className={`idioma-btn ${proveedor === 'groq' ? 'active' : ''}`}
+                    onClick={() => setProveedor('groq')}
                   >
-                    🧠 Claude
+                    ⚡ Groq
                   </button>
                 </div>
                 <p className="idioma-nota">
