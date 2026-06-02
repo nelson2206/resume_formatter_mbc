@@ -85,8 +85,17 @@ def normalizar_perfil(datos: dict) -> dict:
     perfil["experiencia_profesional"] = _deduplicar(perfil["experiencia_profesional"])
     perfil["conocimientos_clave"] = _deduplicar(perfil["conocimientos_clave"])
 
-    # Truncar resumen a 3 líneas (según requerimiento de ideal 3 líneas)
+    # Resumen en UNA sola línea (sin saltos de línea)
     perfil["resumen_profesional"] = _truncar_resumen(perfil["resumen_profesional"])
+
+    # Tope DURO de 350 palabras en experiencia (red de seguridad si la IA se pasa)
+    perfil["experiencia_profesional"], recortados = _limitar_palabras(
+        perfil["experiencia_profesional"], 350
+    )
+    if recortados:
+        perfil["alertas"].append(
+            f"Se recortaron {recortados} bullet(s) de experiencia para respetar el límite de 350 palabras."
+        )
 
     return perfil
 
@@ -140,12 +149,25 @@ def _deduplicar(lista: list) -> list:
 
 
 def _truncar_resumen(resumen: str) -> str:
-    """Si el resumen tiene más de 3 líneas lógicas, lo trunca."""
+    """Colapsa el resumen a UNA sola línea continua (sin saltos de línea)."""
     if not resumen:
         return ""
-    # Dividir por saltos de línea y tomar máximo 3
-    lineas = [l.strip() for l in resumen.split("\n") if l.strip()]
-    if len(lineas) > 3:
-        return " ".join(lineas[:3])
-    # Si es una sola línea muy larga (> 300 chars), no truncar — el PPT lo manejará
-    return resumen
+    return " ".join(l.strip() for l in resumen.splitlines() if l.strip())
+
+
+def _limitar_palabras(bullets: list, max_palabras: int):
+    """
+    Devuelve (bullets_recortados, n_descartados) garantizando que la suma total
+    de palabras no supere max_palabras. Mantiene bullets enteros desde el inicio
+    (la IA ya prioriza los más relevantes primero) y descarta los del final que
+    no caben. Los marcadores **negrita** no cuentan como palabras.
+    """
+    total = 0
+    resultado = []
+    for b in bullets:
+        n = len(b.replace("**", "").split())
+        if resultado and total + n > max_palabras:
+            break
+        resultado.append(b)
+        total += n
+    return resultado, len(bullets) - len(resultado)
