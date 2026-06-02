@@ -1,8 +1,8 @@
 import React from 'react';
-import { X, User, Briefcase, GraduationCap, Globe, Cpu } from 'lucide-react';
+import { X } from 'lucide-react';
 
-// Convierte marcadores Markdown **negrita** en elementos <strong>.
-// Devuelve un array de nodos React listos para renderizar.
+// Convierte marcadores Markdown **negrita** en elementos <strong>,
+// igual que el resaltado en negrita del PPTX descargable.
 const renderNegrita = (texto) => {
   if (!texto) return texto;
   const partes = String(texto).split(/\*\*(.+?)\*\*/g);
@@ -13,6 +13,10 @@ const renderNegrita = (texto) => {
   );
 };
 
+// Réplica fiel de la plantilla PPTX (CV template.pptx):
+//  - Columna izquierda: cabecera plum (nombre/rol) + Formación académica,
+//    Conocimientos Clave, Idiomas (en ese orden).
+//  - Columna derecha: "Experiencia profesional" -> resumen (párrafo líder) -> bullets.
 const SlidePreview = ({ perfil, onClose }) => {
   if (!perfil) return null;
 
@@ -30,83 +34,55 @@ const SlidePreview = ({ perfil, onClose }) => {
         {/* El "Slide" (Simulación de diapositiva 16:9) */}
         <div className="slide-container">
           <div className="slide-mockup">
-            
-            {/* Cabecera Corporativa Minsait */}
-            <header className="slide-header">
-              <div className="header-name">
-                <h2>{perfil.nombre || "Nombre del Consultor"}</h2>
-              </div>
-              <div className="header-rol">
-                <h3>{perfil.rol_seniority || "Role / Seniority"}</h3>
-              </div>
-            </header>
-
             <div className="slide-body">
-              {/* Columna Lateral (Izquierda) */}
+
+              {/* Columna izquierda: cabecera + secciones del lateral */}
               <aside className="slide-sidebar">
-                
+                <header className="slide-header">
+                  <span className="header-label">CV PERFILES EQUIPO DE TRABAJO</span>
+                  <h2 className="header-name">{perfil.nombre || "Nombre del Consultor"}</h2>
+                  <h3 className="header-rol">{perfil.rol_seniority || "Role | Seniority"}</h3>
+                </header>
+
                 <section className="slide-sidebar-section">
-                  <div className="section-title-row">
-                    <GraduationCap size={14} className="icon-minsait" />
-                    <h4>FORMACIÓN ACADÉMICA</h4>
-                  </div>
+                  <h4>Formación académica</h4>
                   <ul>
                     {perfil.formacion_academica?.map((f, i) => <li key={i}>{f}</li>)}
                   </ul>
                 </section>
 
                 <section className="slide-sidebar-section">
-                  <div className="section-title-row">
-                    <Globe size={14} className="icon-minsait" />
-                    <h4>IDIOMAS</h4>
-                  </div>
-                  <p className="sidebar-text">{perfil.idiomas}</p>
-                </section>
-
-                <section className="slide-sidebar-section highlight">
-                  <div className="section-title-row">
-                    <Cpu size={14} className="icon-minsait" />
-                    <h4>CONOCIMIENTOS CLAVE</h4>
-                  </div>
-                  <ul className="knowledge-list">
+                  <h4>Conocimientos Clave</h4>
+                  <ul>
                     {perfil.conocimientos_clave?.map((k, i) => <li key={i}>{k}</li>)}
                   </ul>
                 </section>
+
+                <section className="slide-sidebar-section">
+                  <h4>Idiomas</h4>
+                  <p className="sidebar-text">{perfil.idiomas}</p>
+                </section>
               </aside>
 
-              {/* Área Principal (Derecha) */}
+              {/* Columna derecha: Experiencia profesional */}
               <main className="slide-main">
-                
-                <section className="slide-main-section">
-                  <div className="section-title-row">
-                    <User size={14} className="icon-minsait" />
-                    <h4>RESUMEN PROFESIONAL</h4>
-                  </div>
-                  <div className="resumen-content">
-                    {perfil.resumen_profesional?.split('\n').map((line, i) => (
-                      <p key={i}>{renderNegrita(line)}</p>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="slide-main-section flex-grow">
-                  <div className="section-title-row">
-                    <Briefcase size={14} className="icon-minsait" />
-                    <h4>RESPONSABILIDADES Y LOGROS</h4>
-                  </div>
-                  <ul className="experience-list">
-                    {perfil.experiencia_profesional?.map((exp, i) => (
-                      <li key={i}>{renderNegrita(exp)}</li>
-                    ))}
-                  </ul>
-                </section>
-
+                <h4 className="main-title">Experiencia profesional</h4>
+                <div className="resumen-content">
+                  {perfil.resumen_profesional?.split('\n').map((line, i) => (
+                    <p key={i}>{renderNegrita(line)}</p>
+                  ))}
+                </div>
+                <ul className="experience-list">
+                  {perfil.experiencia_profesional?.map((exp, i) => (
+                    <li key={i}>{renderNegrita(exp)}</li>
+                  ))}
+                </ul>
               </main>
+
             </div>
 
-            {/* Footer de diapositiva */}
+            {/* Footer de diapositiva (número de página) */}
             <footer className="slide-footer">
-              <span>Minsait - An Indra Company</span>
               <span className="footer-page">1</span>
             </footer>
 
