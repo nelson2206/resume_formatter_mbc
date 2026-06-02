@@ -3,6 +3,8 @@ normalizer.py — Normaliza y valida el JSON de perfil extraído por la IA.
 Garantiza que todos los campos existen y tienen tipos correctos antes de continuar.
 """
 
+import re
+
 from config import SENIORITY_LEVELS
 
 
@@ -17,11 +19,13 @@ def normalizar_perfil(datos: dict) -> dict:
         "nombre": _str(datos.get("nombre", "")),
         "rol_seniority": _str(datos.get("rol_seniority", "")),
         "enfoque_fit": _str(datos.get("enfoque_fit", "")),
-        "formacion_academica": _lista(datos.get("formacion_academica", [])),
-        "conocimientos_clave": _lista(datos.get("conocimientos_clave", [])),
-        "idiomas": _str(datos.get("idiomas", "")),
+        # La negrita (**) solo corresponde a resumen y experiencia: se limpia del resto.
+        "formacion_academica": [_sin_negrita(x) for x in _lista(datos.get("formacion_academica", []))],
+        "conocimientos_clave": [_sin_negrita(x) for x in _lista(datos.get("conocimientos_clave", []))],
+        "idiomas": _sin_negrita(_str(datos.get("idiomas", ""))),
         "resumen_profesional": _str(datos.get("resumen_profesional", "")),
-        "experiencia_profesional": _lista(datos.get("experiencia_profesional", [])),
+        # En experiencia se conserva la negrita pero se quitan guiones/viñetas iniciales.
+        "experiencia_profesional": [_limpiar_bullet(x) for x in _lista(datos.get("experiencia_profesional", []))],
         "fit_score": _fit_score(datos.get("fit_score")),
         "semaforo": datos.get("semaforo", {"cumple": [], "gaps": []}),
         "alertas": _lista(datos.get("alertas", [])),
@@ -114,6 +118,19 @@ def _fit_score(valor):
     if score < 0 or score > 100:
         return None
     return score
+
+
+def _sin_negrita(texto: str) -> str:
+    """Quita los marcadores Markdown de negrita (**) — para campos que no llevan negrita."""
+    return texto.replace("**", "").strip() if texto else texto
+
+
+def _limpiar_bullet(texto: str) -> str:
+    """Quita guiones/viñetas iniciales ('- ', '• ', '·', en/em dash) de un bullet,
+    conservando la negrita **...** del contenido."""
+    if not texto:
+        return texto
+    return re.sub(r"^[\s\-–—•‣◦·]+", "", texto).strip()
 
 
 def _str(valor) -> str:
