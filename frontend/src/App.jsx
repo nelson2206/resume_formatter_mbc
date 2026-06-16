@@ -218,6 +218,26 @@ const RankingTable = ({ resultados, onDownload, onPreview }) => {
   );
 };
 
+// ── Segmented control animado (diseño 21st.dev / Emil Kowalski, nativo) ────────
+const Segmented = ({ value, onChange, options }) => {
+  const idx = options.findIndex((o) => o.value === value);
+  return (
+    <div className="seg" style={{ '--seg-count': options.length, '--seg-index': idx < 0 ? 0 : idx }}>
+      <span className="seg-thumb" aria-hidden="true" />
+      {options.map((o) => (
+        <button
+          type="button"
+          key={o.value}
+          className={`seg-opt ${value === o.value ? 'active' : ''}`}
+          onClick={() => onChange(o.value)}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 // ── App Principal ──────────────────────────────────────────────────────────────
 function App() {
   const [cvFiles, setCvFiles] = useState([]);
@@ -388,29 +408,15 @@ function App() {
                   <Cpu size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
                   Motor de IA
                 </label>
-                <div className="idioma-selector">
-                  <button
-                    type="button"
-                    className={`idioma-btn ${proveedor === 'openai' ? 'active' : ''}`}
-                    onClick={() => setProveedor('openai')}
-                  >
-                    🤖 OpenAI
-                  </button>
-                  <button
-                    type="button"
-                    className={`idioma-btn ${proveedor === 'gemini' ? 'active' : ''}`}
-                    onClick={() => setProveedor('gemini')}
-                  >
-                    ✨ Gemini
-                  </button>
-                  <button
-                    type="button"
-                    className={`idioma-btn ${proveedor === 'groq' ? 'active' : ''}`}
-                    onClick={() => setProveedor('groq')}
-                  >
-                    ⚡ Groq
-                  </button>
-                </div>
+                <Segmented
+                  value={proveedor}
+                  onChange={setProveedor}
+                  options={[
+                    { value: 'openai', label: '🤖 OpenAI' },
+                    { value: 'gemini', label: '✨ Gemini' },
+                    { value: 'groq', label: '⚡ Groq' },
+                  ]}
+                />
                 <p className="idioma-nota">
                   Requiere la API key del proveedor configurada en el backend.
                 </p>
@@ -422,22 +428,14 @@ function App() {
                   <Globe size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
                   Idioma del perfil generado
                 </label>
-                <div className="idioma-selector">
-                  <button
-                    type="button"
-                    className={`idioma-btn ${idioma === 'es' ? 'active' : ''}`}
-                    onClick={() => setIdioma('es')}
-                  >
-                    🇪🇸 Español
-                  </button>
-                  <button
-                    type="button"
-                    className={`idioma-btn ${idioma === 'en' ? 'active' : ''}`}
-                    onClick={() => setIdioma('en')}
-                  >
-                    🇺🇸 English
-                  </button>
-                </div>
+                <Segmented
+                  value={idioma}
+                  onChange={setIdioma}
+                  options={[
+                    { value: 'es', label: '🇪🇸 Español' },
+                    { value: 'en', label: '🇺🇸 English' },
+                  ]}
+                />
                 <p className="idioma-nota">
                   Nombres, universidades, certificaciones y herramientas no se traducen.
                 </p>
@@ -449,22 +447,14 @@ function App() {
                   <Briefcase size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
                   Formato de la experiencia
                 </label>
-                <div className="idioma-selector">
-                  <button
-                    type="button"
-                    className={`idioma-btn ${formato === 'con_empresa' ? 'active' : ''}`}
-                    onClick={() => setFormato('con_empresa')}
-                  >
-                    🏢 Con empresa
-                  </button>
-                  <button
-                    type="button"
-                    className={`idioma-btn ${formato === 'sin_empresa' ? 'active' : ''}`}
-                    onClick={() => setFormato('sin_empresa')}
-                  >
-                    🕶️ Sin empresa (anonimizado)
-                  </button>
-                </div>
+                <Segmented
+                  value={formato}
+                  onChange={setFormato}
+                  options={[
+                    { value: 'con_empresa', label: '🏢 Con empresa' },
+                    { value: 'sin_empresa', label: '🕶️ Sin empresa' },
+                  ]}
+                />
                 <p className="idioma-nota">
                   {formato === 'con_empresa'
                     ? 'Cada experiencia inicia con el nombre de la empresa tal como aparece en el CV.'
