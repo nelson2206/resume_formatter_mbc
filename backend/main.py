@@ -9,6 +9,7 @@ Endpoints:
 """
 
 import os
+import base64
 import traceback
 from typing import List, Optional
 
@@ -126,6 +127,11 @@ async def procesar_documentos(
             ppt_id = os.path.basename(output_path)
             _sesion_ppts.append(output_path)
 
+            # Embebemos el PPTX en base64 para que el frontend lo descargue sin
+            # depender del disco (Render Free es efímero y se borra en cada redeploy).
+            with open(output_path, "rb") as _f:
+                ppt_b64 = base64.b64encode(_f.read()).decode("ascii")
+
             resultado["nombre"] = perfil.get("nombre", "")
             resultado["rol_seniority"] = perfil.get("rol_seniority", "")
             resultado["enfoque_fit"] = perfil.get("enfoque_fit", "")
@@ -133,6 +139,7 @@ async def procesar_documentos(
             resultado["semaforo"] = perfil.get("semaforo", {"cumple": [], "gaps": []})
             resultado["alertas"] = perfil.get("alertas", [])
             resultado["ppt_id"] = ppt_id
+            resultado["ppt_base64"] = ppt_b64  # Para descarga directa sin tocar disco
             resultado["cv_id"] = os.path.basename(cv_path)
             resultado["perfil"] = perfil # Data completa para previsualización HTML
 

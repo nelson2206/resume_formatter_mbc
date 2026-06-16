@@ -55,7 +55,7 @@ const ResultRow = ({ r, onDownload, onPreview }) => {
             </button>
           )}
           {r.ppt_id && (
-            <button className="btn-download" onClick={() => onDownload(r.ppt_id)}>
+            <button className="btn-download" onClick={() => onDownload(r)}>
               <Download size={14} /> Descargar
             </button>
           )}
@@ -203,7 +203,7 @@ const RankingTable = ({ resultados, onDownload, onPreview }) => {
                           <Eye size={14} />
                         </button>
                       )}
-                      <button className="btn-download" onClick={() => onDownload(r.ppt_id)}>
+                      <button className="btn-download" onClick={() => onDownload(r)}>
                         <Download size={14} />
                       </button>
                     </div>
@@ -286,8 +286,33 @@ function App() {
     }
   };
 
-  const handleDescargar = (pptId) => {
-    window.open(`${API}/api/descargar/${pptId}`, '_blank');
+  const handleDescargar = (result) => {
+    // result puede ser el objeto resultado completo (con ppt_base64) o, por
+    // compatibilidad, un string con el ppt_id.
+    const r = typeof result === 'string' ? { ppt_id: result } : (result || {});
+    const filename = r.ppt_id || 'Perfil.pptx';
+    try {
+      if (r.ppt_base64) {
+        // Descarga directa desde los bytes embebidos (no depende del disco del backend).
+        const bytes = Uint8Array.from(atob(r.ppt_base64), (c) => c.charCodeAt(0));
+        const blob = new Blob([bytes], {
+          type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        return;
+      }
+    } catch (e) {
+      console.error('Descarga desde base64 falló, usando endpoint:', e);
+    }
+    // Fallback: endpoint del backend (puede fallar si el archivo ya no está en disco).
+    if (r.ppt_id) window.open(`${API}/api/descargar/${r.ppt_id}`, '_blank');
   };
 
   const handlePreview = (result) => {
