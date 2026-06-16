@@ -1017,6 +1017,154 @@ textarea::placeholder {
   border: 1px solid #eee;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   PRO MAX POLISH — movimiento, profundidad y microinteracciones
+   (capa de refinamiento; solo overrides por cascada, no toca el layout)
+   Estética: easing suave estilo Emil Kowalski / 21st.dev
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);     /* entradas: arranca rápido, asienta suave */
+  --ease-smooth: cubic-bezier(0.32, 0.72, 0, 1); /* movimiento general, ligeramente elástico */
+  --dur-fast: 140ms;
+  --dur: 220ms;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 12px 28px rgba(0,0,0,0.10);
+  --shadow-glow-accent: 0 6px 22px rgba(233, 78, 119, 0.35);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tipografía: titulares un punto más afinados */
+.panel-title,
+.rank-name,
+.header-name { letter-spacing: -0.015em; }
+
+/* ── Botones: easing afinado + feedback de press + focus ring ──────── */
+.btn-primary,
+.btn-zip,
+.btn-download,
+.btn-expand,
+.idioma-btn,
+.preview-close,
+.ranking-table .btn-download,
+.ranking-table .btn-expand {
+  transition: transform var(--dur-fast) var(--ease-smooth),
+              box-shadow var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out);
+  will-change: transform;
+}
+
+.btn-primary:active:not(:disabled),
+.btn-zip:active,
+.btn-download:active,
+.btn-expand:active,
+.idioma-btn:active,
+.ranking-table .btn-download:active,
+.ranking-table .btn-expand:active {
+  transform: scale(0.96);
+}
+
+:where(button, a, textarea, input):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Corrige el glow azul heredado y lo alinea al acento de marca */
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow-accent);
+}
+
+/* ── Selector pills (idioma / formato / motor) ────────────────────── */
+.idioma-btn { letter-spacing: -0.01em; }
+.idioma-btn:hover { transform: translateY(-1px); }
+.idioma-btn.active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+
+/* ── Dropzone: respuesta más viva ─────────────────────────────────── */
+.file-dropzone {
+  transition: transform var(--dur) var(--ease-smooth),
+              border-color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out);
+}
+.file-dropzone:hover { transform: translateY(-1px); }
+.file-dropzone.dragging { transform: scale(1.01); }
+.file-tag { transition: transform var(--dur-fast) var(--ease-smooth); }
+.file-tag:hover { transform: translateY(-1px); }
+
+/* ── Tarjetas de resultado: lift sutil + entrada escalonada ───────── */
+.result-row {
+  transition: transform var(--dur) var(--ease-smooth),
+              box-shadow var(--dur) var(--ease-out),
+              border-color var(--dur) var(--ease-out);
+  animation: riseIn 0.5s var(--ease-out) both;
+}
+.result-row:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.results-list .result-row:nth-child(1) { animation-delay: 0.02s; }
+.results-list .result-row:nth-child(2) { animation-delay: 0.06s; }
+.results-list .result-row:nth-child(3) { animation-delay: 0.10s; }
+.results-list .result-row:nth-child(4) { animation-delay: 0.14s; }
+.results-list .result-row:nth-child(5) { animation-delay: 0.18s; }
+.results-list .result-row:nth-child(n+6) { animation-delay: 0.22s; }
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Filas del ranking: realce al pasar el cursor ─────────────────── */
+.ranking-table tbody tr {
+  transition: background-color var(--dur) var(--ease-out);
+}
+.ranking-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Panels: entrada con easing refinado ──────────────────────────── */
+.panel, .ranking-section, .scoring-legend-compact {
+  animation: riseIn 0.5s var(--ease-out) both;
+}
+
+/* ── Fit badge: aparición con pop ─────────────────────────────────── */
+.fit-badge { animation: popIn 0.45s var(--ease-out) both; }
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Modal de vista previa: entrada suave ─────────────────────────── */
+.preview-overlay { animation: overlayIn 0.25s var(--ease-out) both; }
+.preview-modal   { animation: modalIn 0.4s var(--ease-out) both; }
+.preview-close:hover { transform: rotate(90deg); }
+
+@keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Accesibilidad: respeta reduce-motion ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 .legend-bar {
   display: flex;
   height: 24px;
