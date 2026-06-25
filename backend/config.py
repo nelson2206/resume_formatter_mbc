@@ -79,7 +79,7 @@ IDIOMAS_SOPORTADOS = {
 #   "con_empresa": cada bullet inicia con el nombre de la empresa/cliente (tal como aparece en el CV).
 #   "sin_empresa": no se nombra la empresa; se describe la actividad y se referencia el tipo/sector.
 FORMATOS_EXPERIENCIA = ("con_empresa", "sin_empresa")
-FORMATO_EXPERIENCIA_DEFAULT = "con_empresa"
+FORMATO_EXPERIENCIA_DEFAULT = "sin_empresa"
 
 # Extensiones de archivo permitidas para CVs
 CV_EXTENSIONS_PERMITIDAS = {".pdf", ".docx", ".doc", ".txt", ".pptx"}

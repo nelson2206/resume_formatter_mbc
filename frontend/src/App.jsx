@@ -243,7 +243,7 @@ function App() {
   const [cvFiles, setCvFiles] = useState([]);
   const [contexto, setContexto] = useState('');
   const [idioma, setIdioma] = useState('es');
-  const [formato, setFormato] = useState('con_empresa');
+  const [formato, setFormato] = useState('sin_empresa');
   const [proveedor, setProveedor] = useState('gemini');
   const [procesando, setProcesando] = useState(false);
   const [resultados, setResultados] = useState([]);

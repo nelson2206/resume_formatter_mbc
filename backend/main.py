@@ -62,7 +62,7 @@ async def procesar_documentos(
     plantilla: Optional[UploadFile] = File(None),
     contexto: str = Form(""),
     idioma: str = Form("es"),
-    formato: str = Form("con_empresa"),
+    formato: str = Form("sin_empresa"),
     proveedor: str = Form("gemini"),
 ):
     """
