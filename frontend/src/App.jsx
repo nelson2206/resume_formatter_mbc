@@ -414,7 +414,6 @@ function App() {
                   options={[
                     { value: 'openai', label: '🤖 OpenAI' },
                     { value: 'gemini', label: '✨ Gemini' },
-                    { value: 'groq', label: '⚡ Groq' },
                   ]}
                 />
                 <p className="idioma-nota">

@@ -219,8 +219,6 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
                 return _extraer_gemini(system_prompt, user_prompt, cfg["model"], api_key)
             elif proveedor == "anthropic":
                 return _extraer_anthropic(system_prompt, user_prompt, cfg["model"], api_key)
-            elif proveedor == "groq":
-                return _extraer_groq(system_prompt, user_prompt, cfg["model"], api_key)
             else:
                 return _perfil_vacio_con_error(f"Proveedor no soportado: {proveedor}")
 
@@ -277,24 +275,6 @@ def _extraer_openai(system_prompt: str, user_prompt: str, model: str, api_key: s
     if getattr(msg, "refusal", None):
         raise RuntimeError(f"El modelo rechazó la solicitud: {msg.refusal}")
     return json.loads((msg.content or "").strip())
-
-
-def _extraer_groq(system_prompt: str, user_prompt: str, model: str, api_key: str) -> dict:
-    """Groq (API compatible con OpenAI) con salida JSON. Usa el SDK de OpenAI
-    apuntando a la base_url de Groq. El normalizer garantiza la estructura."""
-    from openai import OpenAI
-
-    client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
-    response = client.chat.completions.create(
-        model=model,
-        response_format={"type": "json_object"},
-        temperature=LLM_TEMPERATURE,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-    )
-    return json.loads((response.choices[0].message.content or "").strip())
 
 
 def _extraer_anthropic(system_prompt: str, user_prompt: str, model: str, api_key: str) -> dict:

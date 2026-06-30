@@ -47,11 +47,6 @@ PROVEEDORES = {
         "model": os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
         "env": "ANTHROPIC_API_KEY",
     },
-    "groq": {
-        "label": "Groq",
-        "model": os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
-        "env": "GROQ_API_KEY",
-    },
 }
 PROVEEDOR_DEFAULT = "gemini"
 
