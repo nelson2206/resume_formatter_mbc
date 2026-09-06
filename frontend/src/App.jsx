@@ -283,27 +283,45 @@ function App() {
 
     setProcesando(true);
 
-    // Mostrar filas en estado "procesando"
-    const inicial = cvFiles.map(f => ({ archivo: f.name, estado: 'procesando', alertas: [], ppt_id: null, error: null }));
+    const inicial = cvFiles.map(f => ({ archivo: f.name, estado: 'pendiente', alertas: [], ppt_id: null, error: null }));
     setResultados(inicial);
 
-    const formData = new FormData();
-    cvFiles.forEach(f => formData.append('cvs', f));
-    formData.append('contexto', contexto);
-    formData.append('idioma', idioma);
-    formData.append('formato', formato);
-    formData.append('proveedor', proveedor);
+    // Se envia un CV por peticion. El backend los procesa en serie (~30-60 s cada
+    // uno), de modo que una tanda completa en una sola peticion superaba el
+    // timeout del cliente y la UI mostraba "Network Error".
+    const acumulado = [...inicial];
+    let fallos = 0;
 
-    try {
-      const res = await axios.post(`${API}/api/procesar`, formData, { timeout: 120000 });
-      setResultados(res.data.resultados);
-    } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Error desconocido.';
-      setErrorGlobal(`Error al procesar: ${msg}`);
-      setResultados([]);
-    } finally {
-      setProcesando(false);
+    for (let i = 0; i < cvFiles.length; i++) {
+      acumulado[i] = { ...acumulado[i], estado: 'procesando' };
+      setResultados([...acumulado]);
+
+      const formData = new FormData();
+      formData.append('cvs', cvFiles[i]);
+      formData.append('contexto', contexto);
+      formData.append('idioma', idioma);
+      formData.append('formato', formato);
+      formData.append('proveedor', proveedor);
+
+      try {
+        const res = await axios.post(`${API}/api/procesar`, formData, { timeout: 300000 });
+        acumulado[i] = res.data.resultados?.[0] || { ...acumulado[i], estado: 'error', error: 'Respuesta vacia del servidor.' };
+      } catch (err) {
+        fallos++;
+        const detalle = err.response?.data?.detail;
+        const msg = (typeof detalle === 'string' ? detalle : null) || err.message || 'Error desconocido.';
+        acumulado[i] = { ...acumulado[i], estado: 'error', error: msg };
+      }
+      setResultados([...acumulado]);
     }
+
+    if (fallos === cvFiles.length) {
+      setErrorGlobal('No se pudo procesar ningun CV. Revisa la conexion e intentalo de nuevo.');
+    } else if (fallos > 0) {
+      setErrorGlobal(`${fallos} de ${cvFiles.length} CVs fallaron. Los demas se generaron correctamente.`);
+    }
+
+    setProcesando(false);
   };
 
   const handleDescargar = (result) => {
