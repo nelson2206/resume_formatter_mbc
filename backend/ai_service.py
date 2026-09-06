@@ -69,6 +69,7 @@ def extrae_perfil_cv(
     idioma: str = "es",
     formato: str = FORMATO_EXPERIENCIA_DEFAULT,
     proveedor: str = None,
+    imagenes: list = None,
 ) -> dict:
     """
     Extrae y estructura el perfil profesional desde el texto del CV.
@@ -196,7 +197,15 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
 - No incluyas un campo "certificaciones": va dentro de "formacion_academica"."""
 
     contexto_bloque = f"\n\nCONTEXTO DEL PROYECTO O ROL (prioriza experiencia relevante sin inventar):\n{contexto_proyecto}" if contexto_proyecto.strip() else ""
-    user_prompt = f"CV PARA PROCESAR:{contexto_bloque}\n\n{cv_text}"
+    if imagenes:
+        # CV escaneado: el contenido va como imagen, no como texto.
+        user_prompt = (
+            "CV PARA PROCESAR: llega como imagenes de un PDF escaneado. Lee TODO el "
+            "texto visible respetando columnas, tablas y secciones, y aplica las mismas "
+            "reglas que con un CV en texto." + contexto_bloque
+        )
+    else:
+        user_prompt = f"CV PARA PROCESAR:{contexto_bloque}\n\n{cv_text}"
 
     # ── Resolver proveedor y API key ─────────────────────────────────────────────
     proveedor = (proveedor or PROVEEDOR_DEFAULT).lower()
@@ -214,11 +223,11 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
     for intento in range(1, intentos + 1):
         try:
             if proveedor == "openai":
-                return _extraer_openai(system_prompt, user_prompt, cfg["model"], api_key)
+                return _extraer_openai(system_prompt, user_prompt, cfg["model"], api_key, imagenes)
             elif proveedor == "gemini":
-                return _extraer_gemini(system_prompt, user_prompt, cfg["model"], api_key)
+                return _extraer_gemini(system_prompt, user_prompt, cfg["model"], api_key, imagenes)
             elif proveedor == "anthropic":
-                return _extraer_anthropic(system_prompt, user_prompt, cfg["model"], api_key)
+                return _extraer_anthropic(system_prompt, user_prompt, cfg["model"], api_key, imagenes)
             else:
                 return _perfil_vacio_con_error(f"Proveedor no soportado: {proveedor}")
 
@@ -243,9 +252,44 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
             return _perfil_vacio_con_error(str(e))
 
 
+# ── Contenido multimodal (CVs escaneados) ───────────────────────────────────────
+
+def _contenido_openai(user_prompt: str, imagenes: list = None):
+    """Mensaje de usuario para OpenAI: texto solo, o texto + imagenes del CV."""
+    if not imagenes:
+        return user_prompt
+    import base64
+    partes = [{"type": "text", "text": user_prompt}]
+    for img in imagenes:
+        b64 = base64.b64encode(img).decode("ascii")
+        partes.append({
+            "type": "image_url",
+            "image_url": {"url": "data:image/jpeg;base64," + b64},
+        })
+    return partes
+
+
+def _contenido_anthropic(user_prompt: str, imagenes: list = None):
+    """Mensaje de usuario para Claude: texto solo, o texto + imagenes del CV."""
+    if not imagenes:
+        return user_prompt
+    import base64
+    partes = [{"type": "text", "text": user_prompt}]
+    for img in imagenes:
+        partes.append({
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": "image/jpeg",
+                "data": base64.b64encode(img).decode("ascii"),
+            },
+        })
+    return partes
+
+
 # ── Implementaciones por proveedor ───────────────────────────────────────────────
 
-def _extraer_openai(system_prompt: str, user_prompt: str, model: str, api_key: str) -> dict:
+def _extraer_openai(system_prompt: str, user_prompt: str, model: str, api_key: str, imagenes: list = None) -> dict:
     """OpenAI con Structured Outputs (json_schema strict)."""
     from openai import OpenAI
 
@@ -258,7 +302,7 @@ def _extraer_openai(system_prompt: str, user_prompt: str, model: str, api_key: s
         },
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
+            {"role": "user", "content": _contenido_openai(user_prompt, imagenes)},
         ],
     )
     try:
@@ -277,7 +321,7 @@ def _extraer_openai(system_prompt: str, user_prompt: str, model: str, api_key: s
     return json.loads((msg.content or "").strip())
 
 
-def _extraer_anthropic(system_prompt: str, user_prompt: str, model: str, api_key: str) -> dict:
+def _extraer_anthropic(system_prompt: str, user_prompt: str, model: str, api_key: str, imagenes: list = None) -> dict:
     """Anthropic Claude con tool-use forzado (el input_schema fuerza la estructura)."""
     import anthropic
 
@@ -292,7 +336,7 @@ def _extraer_anthropic(system_prompt: str, user_prompt: str, model: str, api_key
         max_tokens=4096,
         temperature=LLM_TEMPERATURE,
         system=system_prompt,
-        messages=[{"role": "user", "content": user_prompt}],
+        messages=[{"role": "user", "content": _contenido_anthropic(user_prompt, imagenes)}],
         tools=[tool],
         tool_choice={"type": "tool", "name": "registrar_perfil"},
     )
@@ -302,7 +346,7 @@ def _extraer_anthropic(system_prompt: str, user_prompt: str, model: str, api_key
     raise RuntimeError("Claude no devolvió la herramienta con el perfil estructurado.")
 
 
-def _extraer_gemini(system_prompt: str, user_prompt: str, model: str, api_key: str) -> dict:
+def _extraer_gemini(system_prompt: str, user_prompt: str, model: str, api_key: str, imagenes: list = None) -> dict:
     """Google Gemini con salida JSON (response_json_schema si el SDK lo soporta)."""
     from google import genai
     from google.genai import types
@@ -320,7 +364,11 @@ def _extraer_gemini(system_prompt: str, user_prompt: str, model: str, api_key: s
     except Exception:
         config = types.GenerateContentConfig(**base)
 
-    response = client.models.generate_content(model=model, contents=user_prompt, config=config)
+    contenido = [user_prompt]
+    for img in (imagenes or []):
+        contenido.append(types.Part.from_bytes(data=img, mime_type="image/jpeg"))
+
+    response = client.models.generate_content(model=model, contents=contenido, config=config)
     return json.loads((response.text or "").strip())
 
 

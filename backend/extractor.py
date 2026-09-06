@@ -11,6 +11,11 @@ except ImportError:
 
 from PIL import Image
 
+# Marca que devuelve el extractor cuando un PDF no tiene texto util (escaneado)
+# y no hay OCR local disponible. main.py la usa para enviar las paginas como
+# imagen al modelo multimodal en lugar de descartar el CV.
+MARCA_ESCANEADO = "[[PDF_ESCANEADO]]"
+
 # Inicializar lector OCR (Español e Inglés) - Singleton para evitar recargas
 _reader = None
 
@@ -106,8 +111,10 @@ def _extraer_pdf(file_bytes: bytes) -> str:
         print(f"[extractor] Error leyendo PDF con columnas: {e}. Reintentando con OCR...")
         return _extraer_ocr(file_bytes)
     
-    # Si el texto extraído es basura (contiene muchos caracteres de reemplazo)
-    if "" in texto_final and len(texto_final) < 500:
+    # Texto ilegible (caracteres de reemplazo por mala codificacion) o practicamente
+    # vacio: se lee el PDF como imagen. El literal de este check estaba vacio, con lo
+    # que cualquier PDF de menos de 500 caracteres caia aqui.
+    if "�" in texto_final or len(texto_final.strip()) < 200:
         return _extraer_ocr(file_bytes)
 
     return _limpiar_texto(texto_final)
@@ -119,7 +126,7 @@ def _extraer_ocr(file_bytes: bytes) -> str:
     try:
         reader = get_ocr_reader()
         if reader is None:
-            return "[Aviso: Este PDF requiere OCR pero no está activado en esta versión de nube.]"
+            return MARCA_ESCANEADO
             
         doc = fitz.open(stream=file_bytes, filetype="pdf")
         
@@ -197,3 +204,32 @@ def _limpiar_texto(texto: str) -> str:
     texto = re.sub(r" {2,}", " ", texto)
     texto = re.sub(r"\n{3,}", "\n\n", texto)
     return texto.strip()
+
+
+def extraer_imagenes_pdf(file_bytes: bytes, max_paginas: int = 4, ancho_max: int = 1600) -> list:
+    """
+    Renderiza las paginas de un PDF a JPEG para enviarlas a un modelo multimodal.
+
+    Se usa con CVs escaneados, donde no hay texto que extraer. Limita paginas y
+    ancho para no disparar el coste ni el tamano de la peticion.
+
+    Returns: lista de bytes JPEG, una por pagina. Vacia si el PDF no se puede abrir.
+    """
+    imagenes = []
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        for page_num in range(min(len(doc), max_paginas)):
+            page = doc.load_page(page_num)
+            ancho_pt = float(page.rect.width) or 1.0
+            zoom = min(2.0, ancho_max / ancho_pt)
+            pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+            img = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=80, optimize=True)
+            imagenes.append(buf.getvalue())
+        doc.close()
+        print("[extractor] PDF escaneado: %d pagina(s) renderizadas para lectura visual." % len(imagenes))
+    except Exception as e:
+        print("[extractor] No se pudieron renderizar las paginas del PDF: %s" % e)
+        return []
+    return imagenes

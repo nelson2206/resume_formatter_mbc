@@ -17,7 +17,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTa
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from extractor import extraer_texto
+from extractor import extraer_texto, extraer_imagenes_pdf, MARCA_ESCANEADO
 from ai_service import extrae_perfil_cv
 from normalizer import normalizar_perfil
 from ppt_builder import generar_ppt_desde_plantilla
@@ -110,11 +110,20 @@ async def procesar_documentos(
             cv_path = guardar_upload_temporal(cv_file.filename, cv_bytes)
             texto_cv = extraer_texto(cv_file.filename, cv_bytes)
 
-            if len(texto_cv.strip()) < 30:
-                raise ValueError("No se pudo extraer texto suficiente del CV. Verifica que no sea un PDF escaneado sin OCR.")
+            # ── PDF escaneado: leerlo con la vision del modelo ─────────────────
+            # Si el PDF no tiene texto util, se renderizan sus paginas a imagen y
+            # se envian al modelo multimodal, que ademas entiende el layout.
+            imagenes_cv = None
+            if ext == ".pdf" and (texto_cv.startswith(MARCA_ESCANEADO) or len(texto_cv.strip()) < 30):
+                imagenes_cv = extraer_imagenes_pdf(cv_bytes)
+                if imagenes_cv:
+                    texto_cv = ""
+
+            if not imagenes_cv and len(texto_cv.strip()) < 30:
+                raise ValueError("No se pudo extraer texto suficiente del CV. Verifica que el archivo no este vacio o protegido.")
 
             # ── Extraer perfil con IA ──────────────────────────────────────────
-            datos_raw = extrae_perfil_cv(texto_cv, contexto, idioma, formato, proveedor)
+            datos_raw = extrae_perfil_cv(texto_cv, contexto, idioma, formato, proveedor, imagenes_cv)
 
             # ── Normalizar y validar ───────────────────────────────────────────
             perfil = normalizar_perfil(datos_raw)
@@ -138,6 +147,10 @@ async def procesar_documentos(
             resultado["fit_score"] = perfil.get("fit_score", 0)
             resultado["semaforo"] = perfil.get("semaforo", {"cumple": [], "gaps": []})
             resultado["alertas"] = perfil.get("alertas", [])
+            if imagenes_cv:
+                resultado["alertas"].append(
+                    "CV escaneado: leido visualmente por la IA (%d pagina(s))." % len(imagenes_cv)
+                )
             resultado["ppt_id"] = ppt_id
             resultado["ppt_base64"] = ppt_b64  # Para descarga directa sin tocar disco
             resultado["cv_id"] = os.path.basename(cv_path)
