@@ -219,7 +219,10 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
         )
 
     # ── Dispatch al proveedor elegido (con reintentos ante errores transitorios) ──
-    intentos = 3
+    # Los picos de capacidad del proveedor (503 'high demand') duran minutos, no
+    # segundos: con 2s y 4s de espera se abandonaba antes de que el pico pasara.
+    intentos = 4
+    esperas = [5, 15, 30]
     for intento in range(1, intentos + 1):
         try:
             if proveedor == "openai":
@@ -243,7 +246,7 @@ campo respetando las reglas anteriores. Recordatorios de contenido:
         except Exception as e:
             # Errores transitorios del proveedor (saturación, rate limit): reintentar.
             if intento < intentos and _es_error_transitorio(e):
-                espera = 2 * intento
+                espera = esperas[min(intento - 1, len(esperas) - 1)]
                 print(f"[ai_service] Error transitorio de {proveedor} "
                       f"(intento {intento}/{intentos}); reintentando en {espera}s...")
                 time.sleep(espera)
