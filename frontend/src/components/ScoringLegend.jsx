@@ -8,10 +8,10 @@ const ScoringLegend = ({ contexto }) => {
     : 'Skills estándar';
 
   const criteria = [
-    { label: 'Herramientas', weight: '40%', flex: 40, color: '#4c111f', desc: `Requerimientos técnicos: ${keywords}...` },
-    { label: 'Experiencia', weight: '30%', flex: 30, color: '#7a1c32', desc: 'Funciones y responsabilidades' },
-    { label: 'Seniority', weight: '20%', flex: 20, color: '#a82745', desc: 'Trayectoria total' },
-    { label: 'Industria', weight: '10%', flex: 10, color: '#d63258', desc: 'Sector' }
+    { label: 'Herramientas', weight: '40%', flex: 40, color: '#003478', ink: '#ffffff', desc: `Requerimientos técnicos: ${keywords}...` },
+    { label: 'Experiencia', weight: '30%', flex: 30, color: '#0a63e0', ink: '#ffffff', desc: 'Funciones y responsabilidades' },
+    { label: 'Seniority', weight: '20%', flex: 20, color: '#7fb2ff', ink: '#003478', desc: 'Trayectoria total' },
+    { label: 'Industria', weight: '10%', flex: 10, color: '#bfd8ff', ink: '#003478', desc: 'Sector' }
   ];
 
   return (
@@ -22,7 +22,7 @@ const ScoringLegend = ({ contexto }) => {
             <div 
               key={idx} 
               className="legend-segment" 
-              style={{ flex: item.flex, backgroundColor: item.color }}
+              style={{ flex: item.flex, backgroundColor: item.color, color: item.ink }}
               title={`${item.label}: ${item.weight}`}
             >
               <span className="segment-label">{item.weight}</span>

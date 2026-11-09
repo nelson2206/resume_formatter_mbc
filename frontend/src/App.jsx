@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
-import logo from './assets/logo.png';
+import logo from './assets/logo-mbc-blanco.svg';
 import {
   UploadCloud, FileText, CheckCircle, XCircle, AlertTriangle,
   Download, Loader, ChevronDown, ChevronUp, Globe, Info, Eye, Briefcase, Cpu
@@ -374,9 +374,9 @@ function App() {
       {/* Header */}
       <header className="app-header">
         <div className="header-logo">
-          <img src={logo} alt="Minsait Logo" className="brand-logo" />
+          <img src={logo} alt="MBC" className="brand-logo" />
         </div>
-        <div className="header-meta">CV → PowerPoint · Personalizado Minsait</div>
+        <div className="header-meta">CV → PowerPoint · Personalizado MBC</div>
       </header>
 
       <main className="app-main">
@@ -414,7 +414,7 @@ function App() {
                   multiple={true}
                   label="Carga uno o varios CVs"
                   icon={UploadCloud}
-                  color="#3b82f6"
+                  color="#147aff"
                   files={cvFiles}
                   onChange={setCvFiles}
                 />

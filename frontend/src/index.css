@@ -1,39 +1,41 @@
 /* ═══════════════════════════════════════════════════════════════════
    Staffing AI Builder — Design System
-   Palette: Dark Navy + Blue Accent + Amber Highlights
+   Paleta: marca MBC, tonos de azul celeste
    ═══════════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ── Tokens ───────────────────────────────────────────────────────── */
 :root {
-  --bg-base: #e2e2d9; /* Crema/Beige del fondo de la imagen */
-  --bg-panel: #4c111f; /* Fucsia Oscuro profundo (Fondo del Logo) */
-  --bg-panel-alt: #f1f1e9;
-  --bg-input: rgba(255, 255, 255, 0.1);
-  --border-subtle: rgba(255, 255, 255, 0.1);
-  --border-accent: rgba(233, 78, 119, 0.4);
+  /* Marca MBC: tonos de azul celeste */
+  --bg-base: #eaf3ff;           /* Celeste muy claro (fondo de página) */
+  --bg-panel: #ffffff;          /* Contenedores blancos */
+  --bg-panel-alt: #f3f8ff;
+  --bg-input: #f5f9ff;
+  --border-subtle: #cfe0f7;
+  --border-accent: rgba(20, 122, 255, 0.4);
 
-  --text-primary: #ffffff;      /* Para fondos oscuros */
-  --text-on-light: #4c111f;     /* Para fondo crema */
-  --text-secondary: #fce7f3;
-  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-primary: #003478;      /* Azul oscuro MBC */
+  --text-on-light: #003478;
+  --text-secondary: #33517f;
+  --text-muted: #56708f;
 
-  --accent: #e94e77;            /* Rosado vibrante */
-  --accent-hover: #d13d64;
-  --accent-glow: rgba(233, 78, 119, 0.2);
-  
-  --brown: #7d5b5d;             /* Marrón del diamante */
-  --light-pink: #f5c6d6;        /* Rosado claro del diamante */
+  --accent: #147aff;            /* Azul MBC: bordes, íconos y foco */
+  --accent-strong: #0a63e0;     /* Rellenos con texto blanco y texto azul (cumple AA) */
+  --accent-glow: rgba(20, 122, 255, 0.18);
 
-  --amber: #f59e0b;
-  --amber-glow: rgba(245, 158, 11, 0.15);
+  --slate-blue: #3f638f;
+  --light-sky: #dcebff;
 
-  --green: #10b981;
-  --green-bg: rgba(16, 185, 129, 0.2);
+  /* Colores de estado: no son de marca, se mantienen por legibilidad */
+  --amber: #b45309;
+  --amber-glow: rgba(180, 83, 9, 0.15);
 
-  --red: #ef4444;
-  --red-bg: rgba(239, 68, 68, 0.2);
+  --green: #15803d;
+  --green-bg: rgba(21, 128, 61, 0.12);
+
+  --red: #b91c1c;
+  --red-bg: rgba(185, 28, 28, 0.1);
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -69,8 +71,8 @@ body {
   justify-content: space-between;
   padding: 1rem 2rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: var(--bg-panel);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--accent-strong);
+  box-shadow: 0 4px 12px rgba(0, 52, 120, 0.12);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -78,14 +80,14 @@ body {
 }
 
 .brand-logo {
-  height: 32px;
+  height: 22px;
   width: auto;
   object-fit: contain;
 }
 
 .header-meta {
   font-size: 0.78rem;
-  color: var(--text-muted);
+  color: #ffffff;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -124,7 +126,7 @@ body {
   border-radius: var(--radius-xl);
   padding: 1.75rem;
   backdrop-filter: blur(16px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 52, 120, 0.1);
   animation: fadeInUp 0.4s ease both;
 }
 
@@ -255,7 +257,7 @@ body {
   padding: 0.5rem 1rem;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--border-subtle);
-  background: var(--brown);
+  background: var(--slate-blue);
   color: white;
   font-family: 'Inter', sans-serif;
   font-size: 0.85rem;
@@ -265,12 +267,12 @@ body {
 }
 
 .idioma-btn:hover {
-  background: #6a4b4d;
+  background: var(--text-secondary);
 }
 
 .idioma-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
   color: white;
 }
 
@@ -321,7 +323,7 @@ textarea::placeholder {
   font-family: 'Inter', sans-serif;
 }
 
-.btn-sugerencias:hover { color: var(--accent); }
+.btn-sugerencias:hover { color: var(--accent-strong); }
 
 .sugerencias-box {
   background: var(--bg-panel-alt);
@@ -335,20 +337,20 @@ textarea::placeholder {
 .sugerencias-title {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #4c111f;
+  color: var(--text-on-light);
   margin-bottom: 0.5rem;
 }
 
 .sugerencias-box ul {
   padding-left: 1rem;
   font-size: 0.8rem;
-  color: #4a1c2c;
+  color: var(--text-secondary);
   line-height: 1.8;
 }
 
 .sugerencias-nota {
   font-size: 0.73rem;
-  color: #7d5b5d;
+  color: var(--text-muted);
   margin-top: 0.5rem;
   font-style: italic;
 }
@@ -357,7 +359,7 @@ textarea::placeholder {
 .btn-primary {
   width: 100%;
   padding: 0.85rem 1.5rem;
-  background: linear-gradient(135deg, var(--accent), #d13d64);
+  background: var(--accent-strong);
   color: white;
   border: none;
   border-radius: var(--radius-md);
@@ -376,7 +378,7 @@ textarea::placeholder {
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 6px 20px rgba(20, 122, 255, 0.35);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -394,8 +396,8 @@ textarea::placeholder {
   align-items: center;
   gap: 0.4rem;
   background: white;
-  border: 1px solid var(--amber);
-  color: var(--amber);
+  border: 1px solid var(--accent-strong);
+  color: var(--accent-strong);
   padding: 0.4rem 0.9rem;
   border-radius: var(--radius-sm);
   font-family: 'Inter', sans-serif;
@@ -407,7 +409,7 @@ textarea::placeholder {
 }
 
 .btn-zip:hover {
-  background: #fff9eb;
+  background: var(--light-sky);
   transform: translateY(-1px);
 }
 
@@ -417,8 +419,8 @@ textarea::placeholder {
   align-items: center;
   gap: 0.35rem;
   background: white;
-  border: 1px solid var(--green);
-  color: var(--green);
+  border: 1px solid var(--accent-strong);
+  color: var(--accent-strong);
   padding: 0.3rem 0.7rem;
   border-radius: var(--radius-sm);
   font-family: 'Inter', sans-serif;
@@ -429,21 +431,21 @@ textarea::placeholder {
 }
 
 .btn-download:hover {
-  background: #f0fdf4;
+  background: var(--light-sky);
 }
 
-/* Refuerzo para el botón de descarga en la tabla de ranking (fondo fucsia) */
+/* Refuerzo para el botón de descarga en la tabla de ranking */
 .ranking-table .btn-download {
   background: white;
-  border: 1px solid var(--accent);
-  color: var(--accent);
+  border: 1px solid var(--accent-strong);
+  color: var(--accent-strong);
   padding: 0.5rem;
   border-radius: var(--radius-sm);
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .ranking-table .btn-download:hover {
-  background: var(--light-pink);
+  background: var(--light-sky);
   transform: translateY(-2px);
 }
 
@@ -468,11 +470,11 @@ textarea::placeholder {
   transform: translateY(-1px);
 }
 
-/* Refuerzo para el botón de previsualización en la tabla de ranking (fondo fucsia) */
+/* Refuerzo para el botón de previsualización en la tabla de ranking */
 .ranking-table .btn-expand {
   background: white;
-  border: 1px solid var(--accent);
-  color: var(--accent);
+  border: 1px solid var(--accent-strong);
+  color: var(--accent-strong);
   padding: 0.5rem;
   width: auto;
   min-width: 36px;
@@ -481,7 +483,7 @@ textarea::placeholder {
 }
 
 .ranking-table .btn-expand:hover {
-  background: var(--light-pink);
+  background: var(--light-sky);
   transform: translateY(-2px);
 }
 
@@ -534,7 +536,7 @@ textarea::placeholder {
 
 .result-meta {
   font-size: 0.75rem;
-  color: #7d5b5d; /* Marrón */
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
@@ -564,7 +566,7 @@ textarea::placeholder {
 
 .badge-ok { background: var(--green-bg); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
 .badge-error { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
-.badge-processing { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--border-accent); }
+.badge-processing { background: var(--accent-glow); color: var(--accent-strong); border: 1px solid var(--border-accent); }
 .badge-pending { background: var(--bg-panel-alt); color: var(--text-muted); border: 1px solid var(--border-subtle); }
 
 /* ── Alertas panel ────────────────────────────────────────────────── */
@@ -588,7 +590,7 @@ textarea::placeholder {
 .alertas-panel ul {
   padding-left: 1rem;
   font-size: 0.78rem;
-  color: #4a1c2c; /* Guinda oscuro para legibilidad */
+  color: var(--text-secondary);
   line-height: 1.8;
 }
 
@@ -658,7 +660,7 @@ textarea::placeholder {
 }
 
 .ranking-section .panel-title {
-  color: #4c111f; /* Guinda oscuro para mejor contraste */
+  color: var(--text-on-light);
   font-weight: 700;
 }
 
@@ -667,7 +669,7 @@ textarea::placeholder {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 40px rgba(0, 52, 120, 0.1);
 }
 
 .ranking-table {
@@ -676,7 +678,7 @@ textarea::placeholder {
 }
 
 .ranking-table th {
-  background: #f8f8f2;
+  background: var(--bg-panel-alt);
   padding: 1rem;
   text-align: left;
   font-size: 0.75rem;
@@ -698,7 +700,7 @@ textarea::placeholder {
 
 .ranking-table .rank-number {
   font-weight: 700;
-  color: #ffffff; /* Blanco forzoso para resaltar sobre el fondo fucsia */
+  color: var(--text-on-light);
   width: 40px;
 }
 
@@ -737,9 +739,9 @@ textarea::placeholder {
   margin-left: 1px;
 }
 
-.fit-high { border-color: #22c55e; color: #ffffff; box-shadow: 0 0 12px rgba(34, 197, 94, 0.3); }
-.fit-mid { border-color: var(--amber); color: #ffffff; box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
-.fit-low { border-color: var(--red); color: #ffffff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+.fit-high { border-color: var(--green); color: var(--green); box-shadow: 0 0 12px rgba(21, 128, 61, 0.2); }
+.fit-mid { border-color: var(--amber); color: var(--amber); box-shadow: 0 0 10px var(--amber-glow); }
+.fit-low { border-color: var(--red); color: var(--red); box-shadow: 0 0 10px rgba(185, 28, 28, 0.15); }
 
 .rank-focus {
   max-width: 180px;
@@ -804,7 +806,7 @@ textarea::placeholder {
 .preview-tag {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--accent-strong);
   letter-spacing: 0.05em;
 }
 
@@ -832,9 +834,9 @@ textarea::placeholder {
   overflow-y: auto;
 }
 
-/* El Slide (Minsait Style) — réplica de la plantilla PPTX */
+/* El Slide — réplica de la plantilla PPTX (marca MBC) */
 .slide-mockup {
-  background: #e9e9e9;
+  background: var(--bg-base);
   width: 100%;
   aspect-ratio: 16 / 9;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -842,7 +844,7 @@ textarea::placeholder {
   flex-direction: column;
   position: relative;
   font-family: 'Inter', sans-serif;
-  color: #2b2b2b;
+  color: var(--text-on-light);
 }
 
 .slide-body {
@@ -861,9 +863,9 @@ textarea::placeholder {
   overflow-y: auto;
 }
 
-/* Cabecera plum (nombre/rol) en la parte superior izquierda */
+/* Cabecera azul (nombre/rol) en la parte superior izquierda */
 .slide-header {
-  background: #4c111f; /* Minsait Deep Fuchsia */
+  background: var(--accent-strong);
   color: #fff;
   border-radius: 14px;
   padding: 0.9rem 1rem;
@@ -911,10 +913,10 @@ textarea::placeholder {
 .slide-sidebar-section h4 {
   font-size: 0.8rem;
   font-weight: 700;
-  color: #2b2b2b;
+  color: var(--text-on-light);
   margin: 0 0 0.35rem;
   padding-bottom: 0.18rem;
-  border-bottom: 1.5px solid #c0306a; /* línea fucsia */
+  border-bottom: 1.5px solid var(--accent);
 }
 
 .slide-sidebar-section ul {
@@ -946,7 +948,7 @@ textarea::placeholder {
 .slide-main .main-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #4c111f;
+  color: var(--text-on-light);
   margin: 0 0 0.45rem;
 }
 
@@ -954,7 +956,7 @@ textarea::placeholder {
   font-size: 0.7rem;
   line-height: 1.4;
   margin: 0 0 0.5rem;
-  color: #333;
+  color: var(--text-on-light);
 }
 
 .experience-list {
@@ -967,7 +969,7 @@ textarea::placeholder {
   font-size: 0.68rem;
   line-height: 1.35;
   margin-bottom: 0.3rem;
-  color: #333;
+  color: var(--text-on-light);
 }
 
 .slide-footer {
@@ -980,11 +982,11 @@ textarea::placeholder {
 }
 
 .icon-minsait {
-  color: #4c111f;
+  color: var(--text-on-light);
 }
 
-.semaforo-item.cumple { color: #22c55e; } /* Verde más brillante */
-.semaforo-item.gap { color: #f9a8d4; }    /* Rosado claro para legibilidad sobre fucsia oscuro */
+.semaforo-item.cumple { color: var(--green); }
+.semaforo-item.gap { color: var(--red); }
 
 .semaforo-dot {
   width: 6px;
@@ -1029,7 +1031,7 @@ textarea::placeholder {
   --dur: 220ms;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 12px 28px rgba(0,0,0,0.10);
-  --shadow-glow-accent: 0 6px 22px rgba(233, 78, 119, 0.35);
+  --shadow-glow-accent: 0 6px 22px rgba(20, 122, 255, 0.35);
 }
 
 html {
@@ -1130,7 +1132,7 @@ html {
   transition: background-color var(--dur) var(--ease-out);
 }
 .ranking-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(20, 122, 255, 0.05);
 }
 
 /* ── Panels: entrada con easing refinado ──────────────────────────── */
@@ -1163,7 +1165,7 @@ html {
   grid-template-columns: repeat(var(--seg-count, 2), 1fr);
   padding: 4px;
   margin-bottom: 0.4rem;
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--light-sky);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   isolation: isolate;
@@ -1176,7 +1178,7 @@ html {
   bottom: 4px;
   left: 4px;
   width: calc((100% - 8px) / var(--seg-count, 2));
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  background: var(--accent-strong);
   border-radius: 9px;
   box-shadow: 0 4px 14px var(--accent-glow);
   transform: translateX(calc(var(--seg-index, 0) * 100%));
@@ -1195,15 +1197,15 @@ html {
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   white-space: nowrap;
   transition: color 0.25s var(--ease-out), transform var(--dur-fast) var(--ease-smooth);
 }
 
-.seg-opt:hover { color: var(--text-secondary); }
+.seg-opt:hover { color: var(--text-on-light); }
 .seg-opt.active { color: #ffffff; }
 .seg-opt:active { transform: scale(0.95); }
-.seg-opt:focus-visible { outline: 2px solid #fff; outline-offset: -2px; border-radius: 9px; }
+.seg-opt:focus-visible { outline: 2px solid var(--text-on-light); outline-offset: -2px; border-radius: 9px; }
 
 /* ── Accesibilidad: respeta reduce-motion ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
@@ -1267,13 +1269,13 @@ html {
 
 .label-name {
   font-weight: 700;
-  color: #4c111f; /* Ciruela Minsait Oscuro */
+  color: var(--text-on-light);
   font-size: 0.82rem;
 }
 
 .label-desc-compact {
   font-size: 0.7rem;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.25;
   font-weight: 500;
   max-width: 140px;
