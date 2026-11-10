@@ -51,8 +51,15 @@ _sesion_ppts: list = []
 
 @app.get("/api/health")
 def health():
-    """Verifica que el backend está activo."""
-    return {"status": "ok", "version": "2.0"}
+    """Verifica que el backend está activo e informa qué plantilla PPT está usando
+    (huella sha256 corta), para confirmar tras un deploy que llegó la versión vigente."""
+    import hashlib
+    ruta = os.path.join(os.path.dirname(__file__), "..", "templates", "CV template.pptx")
+    huella = None
+    if os.path.exists(ruta):
+        with open(ruta, "rb") as f:
+            huella = hashlib.sha256(f.read()).hexdigest()[:12]
+    return {"status": "ok", "version": "2.1", "plantilla": huella}
 
 
 @app.post("/api/procesar")
